@@ -2,8 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { ColumnType } from '../types';
 import { PlusIcon, TrashIcon } from './Icons';
 
-// @ts-ignore
-declare const XLSX: any;
+import * as XLSX from 'xlsx';
 
 interface ImportStudentsModalProps {
   onClose: () => void;
@@ -152,6 +151,14 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                 <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-12 text-center">
                   <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="block w-full text-sm text-slate-900 border border-slate-300 rounded-lg cursor-pointer bg-slate-50 dark:text-slate-400 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400" />
                 </div>
+                {fileHeaders.length > 0 && fileData.length > 0 && (
+                  <div className="flex justify-end mt-6">
+                    <button onClick={goToMappingStep} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>
+                  </div>
+                )}
+                {fileHeaders.length === 0 && fileData.length === 0 && (
+                  <p className="mt-4 text-center text-red-500 text-sm">لم يتم تحميل أي بيانات بعد. تأكد من أن الملف يحتوي على صف عناوين وألا يكون فارغًا.</p>
+                )}
               </div>
             );
         case 2: // Filter
