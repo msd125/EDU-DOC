@@ -1,0 +1,291 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import { ColumnType } from '../types';
+import { PlusIcon, TrashIcon } from './Icons';
+
+// @ts-ignore
+declare const XLSX: any;
+
+interface ImportStudentsModalProps {
+  onClose: () => void;
+  onImport: (importedData: { [key: string]: any }[], studentNameColumn: string, columnsToImport: { header: string, type: ColumnType, options?: string[] }[]) => void;
+}
+
+type Filter = {
+    id: number;
+    column: string;
+    value: string;
+};
+
+const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onImport }) => {
+  const [step, setStep] = useState(1);
+  const [fileHeaders, setFileHeaders] = useState<string[]>([]);
+  const [fileData, setFileData] = useState<any[]>([]);
+  const [filters, setFilters] = useState<Filter[]>([]);
+
+  const [studentNameColumn, setStudentNameColumn] = useState<string>('');
+  const [columnsToImport, setColumnsToImport] = useState<{[key: string]: {selected: boolean, type: ColumnType, options: string}}>({});
+
+  const handleFile = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const workbook = XLSX.read(e.target?.result, { type: 'binary', cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        if (jsonData.length > 1) {
+          const headers = (jsonData[0] as string[]).map(h => h ? h.toString().trim() : '');
+          const data = XLSX.utils.sheet_to_json(worksheet);
+          
+          setFileHeaders(headers);
+          setFileData(data);
+          setStep(2); // Move to filter step
+        } else {
+          alert("الملف فارغ أو لا يحتوي على بيانات كافية.");
+        }
+      } catch (error) {
+        console.error("Error reading Excel file:", error);
+        alert("حدث خطأ أثناء قراءة الملف. يرجى التأكد من أنه ملف Excel صالح.");
+      }
+    };
+    reader.readAsBinaryString(file);
+  }, []);
+  
+  const uniqueColumnValues = useMemo(() => {
+    const uniqueValues: { [key: string]: Set<any> } = {};
+    if (fileData.length > 0) {
+        fileHeaders.forEach(header => {
+            uniqueValues[header] = new Set();
+        });
+        fileData.forEach(row => {
+            fileHeaders.forEach(header => {
+                if (row[header] !== undefined && row[header] !== null) {
+                    uniqueValues[header].add(row[header]);
+                }
+            });
+        });
+    }
+    return uniqueValues;
+  }, [fileData, fileHeaders]);
+
+
+  const filteredData = useMemo(() => {
+    if (filters.length === 0) {
+      return fileData;
+    }
+    return fileData.filter(row => {
+      return filters.every(filter => {
+        if (!filter.column || !filter.value) return true;
+        return row[filter.column]?.toString() === filter.value.toString();
+      });
+    });
+  }, [fileData, filters]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+  
+  const addFilter = () => {
+    setFilters([...filters, {id: Date.now(), column: '', value: ''}]);
+  };
+  
+  const removeFilter = (id: number) => {
+    setFilters(filters.filter(f => f.id !== id));
+  };
+  
+  const updateFilter = (id: number, updatedFilter: Partial<Filter>) => {
+      setFilters(filters.map(f => f.id === id ? {...f, ...updatedFilter} : f));
+  };
+
+  const goToMappingStep = () => {
+      const nameGuess = fileHeaders.find(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('اسم')) || '';
+      setStudentNameColumn(nameGuess);
+
+      const initialSelections: typeof columnsToImport = {};
+      fileHeaders.forEach(h => {
+          initialSelections[h] = { selected: false, type: ColumnType.NUMBER, options: '' };
+      });
+      setColumnsToImport(initialSelections);
+
+      setStep(3);
+  };
+
+  const handleColumnSelectionChange = (header: string, selected: boolean) => {
+    setColumnsToImport(prev => ({...prev, [header]: {...prev[header], selected}}));
+  };
+  
+  const handleColumnTypeChange = (header: string, type: ColumnType) => {
+    setColumnsToImport(prev => ({...prev, [header]: {...prev[header], type}}));
+  };
+  
+  const handleColumnOptionsChange = (header: string, options: string) => {
+    setColumnsToImport(prev => ({...prev, [header]: {...prev[header], options}}));
+  };
+
+  const handleImport = () => {
+    if (!studentNameColumn) {
+        alert("الرجاء تحديد عمود اسم الطالب.");
+        return;
+    }
+    const finalColumnsToImport = Object.entries(columnsToImport)
+        .filter(([header, config]) => config.selected && header !== studentNameColumn)
+        .map(([header, config]) => ({
+            header, 
+            type: config.type,
+            options: config.type === ColumnType.LIST ? config.options.split(',').map(o => o.trim()).filter(Boolean) : undefined,
+        }));
+
+    onImport(filteredData, studentNameColumn, finalColumnsToImport);
+  };
+  
+  const isImportDisabled = !studentNameColumn;
+
+  const renderStepContent = () => {
+    switch(step) {
+        case 1: // Upload
+            return (
+              <div>
+                <p className="mb-4 text-center text-slate-600 dark:text-slate-400">الخطوة 1: الرجاء اختيار ملف Excel. يجب أن يكون الصف الأول هو عناوين الأعمدة.</p>
+                <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-12 text-center">
+                  <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="block w-full text-sm text-slate-900 border border-slate-300 rounded-lg cursor-pointer bg-slate-50 dark:text-slate-400 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400" />
+                </div>
+              </div>
+            );
+        case 2: // Filter
+            return (
+                <div>
+                    <p className="mb-4 text-slate-600 dark:text-slate-400">الخطوة 2: (اختياري) قم بفلترة البيانات لاستيراد صفوف محددة فقط.</p>
+                    <div className="space-y-2 mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                        {filters.map(filter => (
+                            <div key={filter.id} className="flex items-center gap-2">
+                               <select value={filter.column} onChange={e => updateFilter(filter.id, { column: e.target.value, value: '' })} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
+                                   <option value="">اختر عمود...</option>
+                                   {fileHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                               </select>
+                               <span className="text-slate-500">=</span>
+                               <select value={filter.value} onChange={e => updateFilter(filter.id, { value: e.target.value })} disabled={!filter.column} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
+                                   <option value="">اختر قيمة...</option>
+                                   {filter.column && Array.from(uniqueColumnValues[filter.column]).map((val: any) => <option key={val} value={val}>{val}</option>)}
+                               </select>
+                               <button onClick={() => removeFilter(filter.id)} className="text-red-500 hover:text-red-700 p-2"><TrashIcon className="w-4 h-4"/></button>
+                            </div>
+                        ))}
+                        <button onClick={addFilter} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
+                            <PlusIcon className="w-4 h-4"/> إضافة فلتر
+                        </button>
+                    </div>
+                    <p className="text-sm mb-2 text-slate-600 dark:text-slate-400">معاينة البيانات المفلترة ({filteredData.length} سجل):</p>
+                    <div className="overflow-auto max-h-60 border dark:border-slate-600 rounded">
+                        <table className="w-full text-xs text-left">
+                            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-700">
+                                <tr>{fileHeaders.map(h => <th key={h} className="p-2 font-semibold">{h}</th>)}</tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
+                                {filteredData.slice(0, 10).map((row, i) => (
+                                    <tr key={i}>
+                                        {fileHeaders.map(h => <td key={h} className="p-2 truncate max-w-xs">{row[h]}</td>)}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        case 3: // Map
+            return (
+              <div>
+                <p className="mb-4 text-slate-600 dark:text-slate-400">الخطوة 3: حدد عمود اسم الطالب، ثم اختر الأعمدة التي ترغب في استيرادها.</p>
+                
+                <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-r-4 border-yellow-400">
+                  <label htmlFor="studentNameColumn" className="block mb-2 text-sm font-medium text-slate-900 dark:text-slate-300">1. حدد عمود اسم الطالب (إلزامي)</label>
+                  <select
+                    id="studentNameColumn"
+                    value={studentNameColumn}
+                    onChange={(e) => setStudentNameColumn(e.target.value)}
+                    className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full md:w-1/2 p-2.5 dark:bg-slate-600 dark:border-slate-500"
+                  >
+                    <option value="">-- اختر عمود اسم الطالب --</option>
+                    {fileHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-slate-900 dark:text-slate-300">2. اختر الأعمدة المراد استيرادها كحقول جديدة</label>
+                  <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg max-h-80 overflow-y-auto">
+                    {fileHeaders.map(header => {
+                      const isDisabled = header === studentNameColumn;
+                      const config = columnsToImport[header];
+                      return (
+                        <div key={header} className={'grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-2 rounded ' + (isDisabled ? 'opacity-50' : '')}>
+                          <div className="flex items-center col-span-1">
+                            <input
+                              id={'checkbox-' + header}
+                              type="checkbox"
+                              checked={!isDisabled && config?.selected}
+                              onChange={(e) => handleColumnSelectionChange(header, e.target.checked)}
+                              disabled={isDisabled}
+                              className="w-5 h-5 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600"
+                            />
+                            <label htmlFor={'checkbox-' + header} className="ms-3 font-semibold">{header}</label>
+                          </div>
+                          <div className="col-span-2">
+                            {config?.selected && !isDisabled && (
+                                <div className="flex flex-col md:flex-row gap-2">
+                                    <select
+                                        value={config.type}
+                                        onChange={(e) => handleColumnTypeChange(header, e.target.value as ColumnType)}
+                                        className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-600 dark:border-slate-500"
+                                    >
+                                        {Object.values(ColumnType).map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                    {config.type === ColumnType.LIST && (
+                                        <input
+                                          type="text"
+                                          placeholder="خيارات مفصولة بفاصلة"
+                                          value={config.options}
+                                          onChange={(e) => handleColumnOptionsChange(header, e.target.value)}
+                                          className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-600 dark:border-slate-500"
+                                        />
+                                    )}
+                                </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+        default: return null;
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 m-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100 text-center">استيراد الطلاب والدرجات</h2>
+        
+        <div className="flex-1 overflow-y-auto pr-2">
+            {renderStepContent()}
+        </div>
+
+        <div className="flex justify-between items-center gap-4 mt-8 pt-4 border-t dark:border-slate-600">
+          <div>
+            {step > 1 && <button onClick={() => setStep(s => s - 1)} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600 transition-colors">السابق</button>}
+          </div>
+          <div className="flex gap-4">
+             <button onClick={onClose} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600 transition-colors">إلغاء</button>
+            {step === 2 && <button onClick={goToMappingStep} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>}
+            {step === 3 && <button onClick={handleImport} disabled={isImportDisabled} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">استيراد البيانات</button>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ImportStudentsModal;
