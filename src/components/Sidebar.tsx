@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Class, Subject, ColumnType } from '../types';
 import { 
-    ChevronDownIcon, ChevronUpIcon, XIcon, PlusIcon, 
-    BookOpenIcon, CheckIcon, PlusCircleIcon, EditIcon, TrashIcon
+  ChevronDownIcon, ChevronUpIcon, XIcon, PlusIcon, 
+  BookOpenIcon, CheckIcon, PlusCircleIcon, EditIcon, TrashIcon, 
+  PaletteIcon, ListIcon
 } from './Icons';
+import ConfirmModal from './ConfirmModal';
 
 const assessmentCategories = [
   {
@@ -36,37 +38,103 @@ const assessmentCategories = [
   },
 ];
 
-const THEME_COLORS = ['#2E8540', '#0d6efd', '#6f42c1', '#d63384', '#dc3545', '#fd7e14', '#198754', '#20c997', '#0dcaf0', '#6c757d', '#343a40'];
+// OneNote-inspired color palette
+const THEME_COLORS = [
+  '#7719AA', // Purple
+  '#FFB900', // Yellow
+  '#D83B01', // Orange
+  '#B146C2', // Violet
+  '#107C10', // Green
+  '#0078D4', // Blue
+  '#E3008C', // Pink
+  '#5C2D91', // Deep Purple
+  '#00B7C3', // Cyan
+  '#F7630C', // Deep Orange
+  '#498205', // Olive
+  '#C239B3', // Magenta
+  '#8764B8', // Lavender
+  '#B4009E', // Fuchsia
+  '#008272', // Teal
+  '#E74856', // Red
+  '#0099BC', // Light Blue
+  '#7A7574', // Gray
+  '#FF4343', // Bright Red
+  '#00CC6A', // Emerald
+  '#FFD700', // Gold
+  '#A52A2A', // Brown
+  '#00CED1', // Dark Turquoise
+  '#DC143C', // Crimson
+  '#228B22', // Forest Green
+  '#8A2BE2', // Blue Violet
+  '#FF69B4', // Hot Pink
+  '#40E0D0', // Turquoise
+  '#FF8C00', // Dark Orange
+  '#4682B4', // Steel Blue
+  '#2E8B57', // Sea Green
+  '#6A5ACD', // Slate Blue
+  '#C71585', // Medium Violet Red
+  '#B22222', // Fire Brick
+  '#20B2AA', // Light Sea Green
+  '#F08080', // Light Coral
+  '#556B2F', // Dark Olive Green
+  '#483D8B', // Dark Slate Blue
+  '#8B0000', // Dark Red
+  '#00FA9A', // Medium Spring Green
+  '#191970', // Midnight Blue
+  '#FFDAB9', // Peach Puff
+  '#7FFF00', // Chartreuse
+  '#D2691E', // Chocolate
+];
+
+
+
+
 
 const ReportTheme: React.FC<{
   activeSubject: Subject;
   onUpdateThemeColor: (classId: string, subjectId: string, color: string) => void;
   classId: string;
 }> = ({ activeSubject, onUpdateThemeColor, classId }) => {
-    return (
-        <div className="p-2 space-y-2 border-t border-slate-200 dark:border-slate-700 mt-2">
-            <h3 className="text-sm font-bold px-2 text-slate-700 dark:text-slate-300">تصميم السجل</h3>
-            <div className="px-2 pt-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">اختر لوناً لتمييز رأس الجدول في التقارير.</p>
-                <div className="flex flex-wrap gap-2">
-                    {THEME_COLORS.map(color => (
-                        <button
-                            key={color}
-                            onClick={() => onUpdateThemeColor(classId, activeSubject.id, color)}
-                            className={'w-7 h-7 rounded-full cursor-pointer transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 flex items-center justify-center ' + (activeSubject.themeColor === color ? 'ring-2 ring-offset-2 dark:ring-offset-slate-800 ring-emerald-500' : 'ring-1 ring-slate-300 dark:ring-slate-600')}
-                            style={{ backgroundColor: color }}
-                            aria-label={'Select color ' + color}
-                        >
-                          {activeSubject.themeColor === color && (
-                            <CheckIcon className="w-4 h-4 text-white" style={{ mixBlendMode: 'difference' }}/>
-                          )}
-                        </button>
-                    ))}
-                </div>
-            </div>
+  const [showColors, setShowColors] = useState(false); // مطوي دائماً افتراضياً
+  const oliveColor = '#2E8540';
+  return (
+    <div className="space-y-2 border-t border-slate-200 dark:border-slate-700 mt-2 rounded-lg">
+      <button
+        onClick={() => setShowColors(!showColors)}
+        className="w-full flex justify-between items-center p-2 text-sm text-right rounded-t-lg"
+        style={{ backgroundColor: oliveColor, color: '#fff' }}
+      >
+        <span className="font-bold flex items-center gap-2">
+          <PaletteIcon className="w-5 h-5" />
+          الألوان
+        </span>
+        {showColors ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+      </button>
+      {showColors && (
+        <div className="px-2 pt-1 pb-2 bg-white dark:bg-slate-800 rounded-b-lg">
+          <p className="text-xs mb-2 text-slate-700 dark:text-slate-300">اختر لوناً لتمييز رأس الجدول في التقارير.</p>
+          <div className="flex flex-wrap gap-2">
+            {THEME_COLORS.map(color => (
+              <button
+                key={color}
+                onClick={() => onUpdateThemeColor(classId, activeSubject.id, color)}
+                className={'w-7 h-7 rounded-full cursor-pointer transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center ' + (activeSubject.themeColor === color ? 'ring-2 ring-offset-2 ring-emerald-700' : 'ring-1 ring-slate-300 dark:ring-slate-600')}
+                style={{ backgroundColor: color }}
+                aria-label={'Select color ' + color}
+              >
+                {activeSubject.themeColor === color && (
+                  <CheckIcon className="w-4 h-4 text-white" style={{ mixBlendMode: 'difference' }}/>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
+
+
 
 
 const ReportBuilder: React.FC<{
@@ -74,92 +142,113 @@ const ReportBuilder: React.FC<{
   activeSubject: Subject;
   onAddColumn: (classId: string, subjectId: string, name: string, type: ColumnType) => void;
   onDeleteColumn: (classId: string, subjectId: string, columnId: string, columnName: string, skipConfirm: boolean) => void;
-}> = ({ activeClass, activeSubject, onAddColumn, onDeleteColumn }) => {
-  const [openCategory, setOpenCategory] = useState<string | null>(assessmentCategories[0].title);
-
-  const handleToggle = (itemName: string, isChecked: boolean) => {
-    if (isChecked) {
-      const existingColumn = activeSubject.columns.find(c => c.name === itemName);
-      if(existingColumn) {
-         onDeleteColumn(activeClass.id, activeSubject.id, existingColumn.id, existingColumn.name, true);
-      }
-    } else {
-      onAddColumn(activeClass.id, activeSubject.id, itemName, ColumnType.NUMBER);
-    }
-  };
-
+  hideTitle?: boolean;
+}> = ({ activeClass, activeSubject, onAddColumn, onDeleteColumn, hideTitle }) => {
+  // تصميم احترافي لمكونات السجل مع تشك بوكس
   return (
-    <div className="p-2 space-y-2 border-t border-slate-200 dark:border-slate-700 mt-2">
-      <h3 className="text-sm font-bold px-2 text-slate-700 dark:text-slate-300">مكونات السجل</h3>
-      {assessmentCategories.map(category => {
-        const isOpen = openCategory === category.title;
-        return (
-          <div key={category.title}>
-            <button 
-              onClick={() => setOpenCategory(isOpen ? null : category.title)}
-              className="w-full flex justify-between items-center p-2 text-sm text-right rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors focus:outline-none"
-            >
-              <span className="font-semibold">{category.title}</span>
-              {isOpen ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-            </button>
-            {isOpen && (
-              <div className="p-2 space-y-2">
-                {category.items.map(item => {
-                  const existingColumn = activeSubject.columns.find(c => c.name === item.name);
-                  const isChecked = !!existingColumn;
-                  return (
-                    <label key={item.name} className="flex items-center p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handleToggle(item.name, isChecked)}
-                        className="w-4 h-4 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600"
-                      />
-                      <span className="ms-3 text-sm">{item.name}</span>
+    <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 mt-2 rounded-lg">
+      {!hideTitle && (
+        <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-200 mb-2 mt-2">
+          <ListIcon className="w-5 h-5" />
+          <span>مكونات السجل</span>
+        </div>
+      )}
+      <div className="space-y-4">
+        {assessmentCategories.map((group, idx) => (
+          <div key={group.title} className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-2">
+            <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-200 mb-2">
+              <BookOpenIcon className="w-5 h-5 text-indigo-500" />
+              <span>{group.title} <span className="text-xs text-slate-400">({group.items.length})</span></span>
+            </div>
+            <ul className="grid grid-cols-2 gap-2">
+              {group.items.map((item, i) => {
+                const checked = !!activeSubject.columns.find(c => c.name === item.name);
+                return (
+                  <li key={item.name} className="flex items-center gap-2 bg-white dark:bg-slate-700 rounded px-2 py-1 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          onAddColumn(activeClass.id, activeSubject.id, item.name, ColumnType.NUMBER);
+                        } else {
+                          const col = activeSubject.columns.find(c => c.name === item.name);
+                          if (col) onDeleteColumn(activeClass.id, activeSubject.id, col.id, col.name, true);
+                        }
+                      }}
+                      className="accent-emerald-600 w-4 h-4"
+                      id={`col-${group.title}-${item.name}`}
+                    />
+                    <label htmlFor={`col-${group.title}-${item.name}`} className="flex items-center gap-1 cursor-pointer w-full">
+                      <span className="whitespace-normal break-words text-xs">{item.name}</span>
                     </label>
-                  )
-                })}
-              </div>
-            )}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 };
 
-
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
   classes: Class[];
-  activeClassId: string | null;
-  activeSubjectId: string | null;
-  onSelectClass: (id: string) => void;
-  onSelectSubject: (id: string) => void;
+  activeClassId: string;
+  activeSubjectId: string;
+  onSelectClass: (classId: string) => void;
+  onSelectSubject: (subjectId: string) => void;
   onAddClass: (name: string) => void;
-  onEditClass: (id: string, newName: string) => void;
+  onEditClass: (id: string, name: string) => void;
   onDeleteClass: (id: string, name: string) => void;
   onAddSubject: (classId: string, name: string) => void;
-  onEditSubject: (classId: string, subjectId: string, newName: string) => void;
+  onEditSubject: (classId: string, subjectId: string, name: string) => void;
   onDeleteSubject: (classId: string, subjectId: string, name: string) => void;
   onUpdateSubjectThemeColor: (classId: string, subjectId: string, color: string) => void;
-  onAddColumn: (classId: string, subjectId: string, name: string, type: ColumnType, options?: string[]) => void;
-  onDeleteColumn: (classId: string, subjectId: string, columnId: string, columnName: string, skipConfirm?: boolean) => void;
+  onAddColumn: (classId: string, subjectId: string, name: string, type: ColumnType) => void;
+  onDeleteColumn: (classId: string, subjectId: string, columnId: string, columnName: string, skipConfirm: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-    isOpen, onClose,
-    classes, activeClassId, activeSubjectId, onSelectClass, onSelectSubject, 
-    onAddClass, onEditClass, onDeleteClass, 
-    onAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjectThemeColor,
-    onAddColumn, onDeleteColumn
+const Sidebar: React.FC<SidebarProps> = ({
+  classes,
+  activeClassId,
+  activeSubjectId,
+  onSelectClass,
+  onSelectSubject,
+  onAddClass,
+  onEditClass,
+  onDeleteClass,
+  onAddSubject,
+  onEditSubject,
+  onDeleteSubject,
+  onUpdateSubjectThemeColor,
+  onAddColumn,
+  onDeleteColumn,
+  isOpen,
+  onClose
 }) => {
   const [newClassName, setNewClassName] = useState('');
   const [editingClass, setEditingClass] = useState<{id: string, name: string} | null>(null);
   const [editingSubject, setEditingSubject] = useState<{id: string, name: string} | null>(null);
   const [addingSubjectToClass, setAddingSubjectToClass] = useState<string | null>(null);
   const [newSubjectName, setNewSubjectName] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'class' | 'subject'; classId: string; subjectId?: string; name: string } | null>(null);
+  // Track expanded classes (by id)
+  const [expandedClasses, setExpandedClasses] = useState<string[]>([]);
+  // منع التوسيع التلقائي عند أول تحميل
+  const firstMount = React.useRef(true);
+  React.useEffect(() => {
+    if (firstMount.current) {
+      firstMount.current = false;
+      return;
+    }
+    if (activeClassId) {
+      setExpandedClasses([activeClassId]);
+    }
+  }, [activeClassId]);
 
   const activeClass = classes.find(c => c.id === activeClassId);
   const activeSubject = activeClass?.subjects.find(s => s.id === activeSubjectId);
@@ -194,10 +283,33 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
   }
 
+  // استبدال onDeleteClass و onDeleteSubject بمنطق التأكيد
+  const handleDeleteClass = (id: string, name: string) => {
+    setConfirmDelete({ type: 'class', classId: id, name });
+  };
+  const handleDeleteSubject = (classId: string, subjectId: string, name: string) => {
+    setConfirmDelete({ type: 'subject', classId, subjectId, name });
+  };
+
   return (
     <React.Fragment>
+      {/* نافذة تأكيد الحذف */}
+      {confirmDelete && (
+        <ConfirmModal
+          message={`هل أنت متأكد من حذف ${confirmDelete.type === 'class' ? 'الفصل' : 'المادة'}: "${confirmDelete.name}"؟ سيتم حذف جميع بياناتها نهائياً.`}
+          onConfirm={() => {
+            if (confirmDelete.type === 'class') {
+              onDeleteClass(confirmDelete.classId, confirmDelete.name);
+            } else if (confirmDelete.type === 'subject' && confirmDelete.subjectId) {
+              onDeleteSubject(confirmDelete.classId, confirmDelete.subjectId, confirmDelete.name);
+            }
+            setConfirmDelete(null);
+          }}
+          onCancel={() => setConfirmDelete(null)}
+          confirmLabel="تأكيد الحذف"
+        />
+      )}
       {/* Overlay for mobile */}
-
       <div 
         className={'fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden transition-opacity ' + (isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none')}
         onClick={onClose}
@@ -211,7 +323,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {isOpen ? <XIcon className="w-5 h-5" /> : <span className="text-lg">☰</span>}
       </button>
 
-  <aside className={'fixed inset-y-0 right-0 w-full max-w-xs sm:w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-full border-s-2 border-slate-200 dark:border-slate-700 transform transition-transform duration-300 ease-in-out z-40 ' + (isOpen ? 'translate-x-0' : 'translate-x-full')}>
+      <aside className={'fixed inset-y-0 right-0 w-full max-w-xs sm:w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-full border-s-2 border-slate-200 dark:border-slate-700 transform transition-transform duration-300 ease-in-out z-40 ' + (isOpen ? 'translate-x-0' : 'translate-x-full')}>
         <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
           <h2 className="text-xs sm:text-sm font-bold">الفصول والمواد الدراسية</h2>
           <button onClick={onClose} className="p-2 sm:p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 text-lg">
@@ -224,10 +336,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div key={c.id} className={'rounded-lg transition-all duration-200 ' + (activeClassId === c.id ? 'bg-slate-100 dark:bg-slate-900/50' : '')}>
                   {/* Class Item */}
                   <div
-                    onClick={() => onSelectClass(c.id)}
+                    onClick={() => {
+                      // Toggle expand/collapse
+                      setExpandedClasses(expanded => expanded.includes(c.id)
+                        ? expanded.filter(id => id !== c.id)
+                        : [...expanded, c.id]);
+                    }}
                     className={'flex items-center p-3 cursor-pointer group rounded-t-lg text-xs sm:text-sm ' + (activeClassId === c.id ? 'font-bold' : '')}
                   >
-                    <ChevronDownIcon className={'w-5 h-5 me-2 transition-transform ' + (activeClassId === c.id ? 'rotate-0' : '-rotate-90')} />
+                    <ChevronDownIcon className={'w-5 h-5 me-2 transition-transform ' + (expandedClasses.includes(c.id) ? 'rotate-0' : '-rotate-90')} />
                     {editingClass?.id === c.id ? (
                         <div className="w-full flex items-center gap-1">
                             <input type="text" value={editingClass.name} onChange={e => setEditingClass({...editingClass, name: e.target.value})} className="w-full p-1 border rounded dark:bg-slate-600 dark:border-slate-500" autoFocus onBlur={handleSaveClassEdit} onKeyDown={e => e.key === 'Enter' && handleSaveClassEdit()}/>
@@ -236,17 +353,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                     ) : (
                         <React.Fragment>
-                          <span className="flex-1">{c.name}</span>
-                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                               <button onClick={(e) => { e.stopPropagation(); setAddingSubjectToClass(c.id); setNewSubjectName(''); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="إضافة مادة"><PlusCircleIcon className="w-4 h-4" /></button>
-                               <button onClick={(e) => { e.stopPropagation(); setEditingClass({id: c.id, name: c.name}); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="تعديل الفصل"><EditIcon className="w-4 h-4" /></button>
-                               <button onClick={(e) => { e.stopPropagation(); onDeleteClass(c.id, c.name); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="حذف الفصل"><TrashIcon className="w-4 h-4" /></button>
+                          <span className="flex items-center flex-1 gap-2 min-w-0">
+                            <span className="flex-1 min-w-0 break-words text-right" style={{wordBreak: 'break-word'}} title={c.name}>{c.name}</span>
+                          </span>
+                          <div className="flex items-center">
+                               <button onClick={(e) => { e.stopPropagation(); setAddingSubjectToClass(c.id); setNewSubjectName(''); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="إضافة مادة"><PlusCircleIcon className="w-6 h-6" /></button>
+                               <button onClick={(e) => { e.stopPropagation(); setEditingClass({id: c.id, name: c.name}); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="تعديل الفصل"><EditIcon className="w-6 h-6" /></button>
+                               <button onClick={(e) => { e.stopPropagation(); handleDeleteClass(c.id, c.name); }} className="p-1 rounded-full hover:bg-red-100/80 hover:ring-2 hover:ring-red-400" data-tooltip="حذف الفصل"><TrashIcon className="w-6 h-6 text-red-600" /></button>
                           </div>
                         </React.Fragment>
                     )}
                   </div>
                   {/* Subjects List */}
-                  {activeClassId === c.id && (
+                  {/* قائمة المواد مطوية افتراضياً */}
+                  {expandedClasses.includes(c.id) && (
                     <div className="ps-6 pe-2 pb-2 space-y-1">
                         {c.subjects.map(s => {
                             const isActive = activeSubjectId === s.id;
@@ -270,10 +390,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                    ) : (
                                       <React.Fragment>
                                           <BookOpenIcon className={'w-4 h-4 me-2 ' + (isActive ? '' : 'text-slate-500')}/>
-                                          <span className="flex-1 text-xs sm:text-sm">{s.name}</span>
-                                          <div className={'flex items-center opacity-0 group-hover:opacity-100 transition-opacity ' + (isActive ? 'text-slate-600 dark:text-slate-300' : '')}>
-                                              <button onClick={(e) => { e.stopPropagation(); setEditingSubject({id: s.id, name: s.name}); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="تعديل المادة"><EditIcon className="w-4 h-4" /></button>
-                                              <button onClick={(e) => { e.stopPropagation(); onDeleteSubject(c.id, s.id, s.name); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="حذف المادة"><TrashIcon className="w-4 h-4" /></button>
+                                          <span className="flex-1 min-w-0 w-full break-words whitespace-normal overflow-visible text-right text-xs sm:text-sm" style={{wordBreak: 'break-word'}} title={s.name}>{s.name}</span>
+                                          <div className={'flex items-center ' + (isActive ? 'text-slate-600 dark:text-slate-300' : '')}>
+                                              <button onClick={(e) => { e.stopPropagation(); setEditingSubject({id: s.id, name: s.name}); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="تعديل المادة"><EditIcon className="w-6 h-6" /></button>
+                                              <button onClick={(e) => { e.stopPropagation(); handleDeleteSubject(c.id, s.id, s.name); }} className="p-1 rounded-full hover:bg-red-100/80 hover:ring-2 hover:ring-red-400" data-tooltip="حذف المادة"><TrashIcon className="w-6 h-6 text-red-600" /></button>
                                           </div>
                                       </React.Fragment>
                                    )}
@@ -292,23 +412,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ))}
             </nav>
-            {activeClass && activeSubject && (
-                <React.Fragment>
-                    <ReportBuilder 
-                        activeClass={activeClass} 
-                        activeSubject={activeSubject} 
-                        onAddColumn={onAddColumn}
-                        onDeleteColumn={onDeleteColumn}
-                    />
-                    <ReportTheme 
-                        activeSubject={activeSubject}
-                        onUpdateThemeColor={onUpdateSubjectThemeColor}
-                        classId={activeClass.id}
-                    />
-                </React.Fragment>
-            )}
+            {/* باقي السايدبار: الفصول والمواد بالأعلى */}
         </div>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 mt-auto">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
           <form onSubmit={handleAddClass} className="flex flex-col gap-2">
             <input
               type="text"
@@ -327,6 +433,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </form>
         </div>
+        {/* مكونات السجل وتصميم السجل في الأسفل */}
+        {activeClass && activeSubject && (
+          <div className="p-2 border-t border-slate-200 dark:border-slate-700">
+            {/* Accordion لمكونات السجل */}
+            <AccordionComponent activeClass={activeClass} activeSubject={activeSubject} onAddColumn={onAddColumn} onDeleteColumn={onDeleteColumn} />
+            <div className="mt-2">
+              <ReportTheme 
+                activeSubject={activeSubject}
+                onUpdateThemeColor={onUpdateSubjectThemeColor}
+                classId={activeClass.id}
+              />
+            </div>
+          </div>
+        )}
       </aside>
     </React.Fragment>
   );

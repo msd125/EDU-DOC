@@ -16,10 +16,14 @@ type Filter = {
 };
 
 const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onImport }) => {
+
   const [step, setStep] = useState(1);
   const [fileHeaders, setFileHeaders] = useState<string[]>([]);
   const [fileData, setFileData] = useState<any[]>([]);
   const [filters, setFilters] = useState<Filter[]>([]);
+  const [sheetNames, setSheetNames] = useState<string[]>([]);
+  const [selectedSheet, setSelectedSheet] = useState<string>('');
+  const [rowCount, setRowCount] = useState<number>(0);
 
   const [studentNameColumn, setStudentNameColumn] = useState<string>('');
   const [columnsToImport, setColumnsToImport] = useState<{[key: string]: {selected: boolean, type: ColumnType, options: string}}>({});
@@ -29,16 +33,17 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
     reader.onload = (e) => {
       try {
         const workbook = XLSX.read(e.target?.result, { type: 'binary', cellDates: true });
+        setSheetNames(workbook.SheetNames);
         const sheetName = workbook.SheetNames[0];
+        setSelectedSheet(sheetName);
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
         if (jsonData.length > 1) {
           const headers = (jsonData[0] as string[]).map(h => h ? h.toString().trim() : '');
           const data = XLSX.utils.sheet_to_json(worksheet);
-          
           setFileHeaders(headers);
           setFileData(data);
+          setRowCount(data.length);
           setStep(2); // Move to filter step
         } else {
           alert("الملف فارغ أو لا يحتوي على بيانات كافية.");
@@ -147,9 +152,22 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
         case 1: // Upload
             return (
               <div>
-                <p className="mb-4 text-center text-slate-600 dark:text-slate-400">الخطوة 1: الرجاء اختيار ملف Excel. يجب أن يكون الصف الأول هو عناوين الأعمدة.</p>
-                <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-12 text-center">
+                <div className="flex flex-col items-center mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-700"><svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke="#2E8540" strokeWidth="2" strokeLinecap="round"/></svg></span>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">استيراد ملف Excel</h3>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">اختر ملف Excel يحتوي على بيانات الطلاب. الصف الأول يجب أن يكون عناوين الأعمدة.</p>
+                </div>
+                <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center bg-slate-50 dark:bg-slate-800/40">
                   <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="block w-full text-sm text-slate-900 border border-slate-300 rounded-lg cursor-pointer bg-slate-50 dark:text-slate-400 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400" />
+                  {sheetNames.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-4 items-center justify-center">
+                      <span className="text-xs text-slate-500">عدد الأوراق: <b>{sheetNames.length}</b></span>
+                      <span className="text-xs text-slate-500">عدد الصفوف: <b>{rowCount}</b></span>
+                      <span className="text-xs text-slate-500">اسم الورقة: <b>{selectedSheet}</b></span>
+                    </div>
+                  )}
                 </div>
                 {fileHeaders.length > 0 && fileData.length > 0 && (
                   <div className="flex justify-end mt-6">
@@ -161,46 +179,49 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                 )}
               </div>
             );
-        case 2: // Filter
-            return (
-                <div>
-                    <p className="mb-4 text-slate-600 dark:text-slate-400">الخطوة 2: (اختياري) قم بفلترة البيانات لاستيراد صفوف محددة فقط.</p>
-                    <div className="space-y-2 mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                        {filters.map(filter => (
-                            <div key={filter.id} className="flex items-center gap-2">
-                               <select value={filter.column} onChange={e => updateFilter(filter.id, { column: e.target.value, value: '' })} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
-                                   <option value="">اختر عمود...</option>
-                                   {fileHeaders.map(h => <option key={h} value={h}>{h}</option>)}
-                               </select>
-                               <span className="text-slate-500">=</span>
-                               <select value={filter.value} onChange={e => updateFilter(filter.id, { value: e.target.value })} disabled={!filter.column} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
-                                   <option value="">اختر قيمة...</option>
-                                   {filter.column && Array.from(uniqueColumnValues[filter.column]).map((val: any) => <option key={val} value={val}>{val}</option>)}
-                               </select>
-                               <button onClick={() => removeFilter(filter.id)} className="text-red-500 hover:text-red-700 p-2"><TrashIcon className="w-4 h-4"/></button>
-                            </div>
-                        ))}
-                        <button onClick={addFilter} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
-                            <PlusIcon className="w-4 h-4"/> إضافة فلتر
-                        </button>
-                    </div>
-                    <p className="text-sm mb-2 text-slate-600 dark:text-slate-400">معاينة البيانات المفلترة ({filteredData.length} سجل):</p>
-                    <div className="overflow-auto max-h-60 border dark:border-slate-600 rounded">
-                        <table className="w-full text-xs text-left">
-                            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-700">
-                                <tr>{fileHeaders.map(h => <th key={h} className="p-2 font-semibold">{h}</th>)}</tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
-                                {filteredData.slice(0, 10).map((row, i) => (
-                                    <tr key={i}>
-                                        {fileHeaders.map(h => <td key={h} className="p-2 truncate max-w-xs">{row[h]}</td>)}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            );
+    case 2: // Filter
+      return (
+        <div>
+          <p className="mb-4 text-slate-600 dark:text-slate-400">الخطوة 2: (اختياري) قم بفلترة البيانات لاستيراد صفوف محددة فقط.</p>
+          <div className="space-y-2 mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+            {filters.map(filter => (
+              <div key={filter.id} className="flex flex-col md:flex-row items-center gap-2">
+                 <select value={filter.column} onChange={e => updateFilter(filter.id, { column: e.target.value, value: '' })} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-full md:w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
+                   <option value="">اختر عمود...</option>
+                   {fileHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                 </select>
+                 <span className="text-slate-500">=</span>
+                 <select value={filter.value} onChange={e => updateFilter(filter.id, { value: e.target.value })} disabled={!filter.column} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-full md:w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
+                   <option value="">اختر قيمة...</option>
+                   {filter.column && Array.from(uniqueColumnValues[filter.column]).map((val: any) => <option key={val} value={val}>{val}</option>)}
+                 </select>
+                 <button onClick={() => removeFilter(filter.id)} className="text-red-500 hover:text-red-700 p-2"><TrashIcon className="w-4 h-4"/></button>
+              </div>
+            ))}
+            <button onClick={addFilter} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
+              <PlusIcon className="w-4 h-4"/> إضافة فلتر
+            </button>
+          </div>
+          <div className="flex items-center gap-4 mb-2">
+            <p className="text-sm text-slate-600 dark:text-slate-400">معاينة البيانات المفلترة <span className="font-bold">({filteredData.length} سجل)</span></p>
+            <span className="text-xs text-slate-500">عدد الأعمدة: <b>{fileHeaders.length}</b></span>
+          </div>
+          <div className="overflow-auto max-h-60 border-2 border-emerald-200 dark:border-emerald-700 rounded-lg bg-white dark:bg-slate-800/40 shadow-sm">
+            <table className="w-full text-xs text-left">
+              <thead className="sticky top-0 bg-emerald-50 dark:bg-emerald-900/40">
+                <tr>{fileHeaders.map(h => <th key={h} className="p-2 font-semibold text-emerald-900 dark:text-emerald-200">{h}</th>)}</tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
+                {filteredData.slice(0, 10).map((row, i) => (
+                  <tr key={i} className="hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20 transition">
+                    {fileHeaders.map(h => <td key={h} className="p-2 truncate max-w-xs">{row[h]}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
         case 3: // Map
             return (
               <div>

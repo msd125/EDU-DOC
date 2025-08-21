@@ -5,6 +5,7 @@ export interface Settings {
   educationDirectorate: string;
   academicYear: string;
   semester: string;
+  currentUserName?: string; // اسم المستخدم الحالي للعرض في الهيدر فقط
 }
 
 export interface Student {
@@ -35,9 +36,11 @@ export interface Subject {
   themeColor?: string;
 }
 
+export type ClassType = 'تعليمي' | 'إداري';
 export interface Class {
   id: string;
-  name:string;
+  name: string;
+  type: ClassType;
   students: Student[];
   subjects: Subject[];
 }

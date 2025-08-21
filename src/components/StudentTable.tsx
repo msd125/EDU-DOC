@@ -1,286 +1,271 @@
-import React, { useState, useEffect, useRef } from 'react';
-// ...existing code...
-
-import { Student, Subject, Column, ColumnType } from '../types';
-// ...existing code...
+// دالة تلوين خلفية الأعمدة مع شفافية
+function getHeaderBg(color?: string) {
+  if (!color) return 'rgba(46,133,64,0.08)';
+  // تحويل HEX إلى RGBA مع شفافية
+  let c = color.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r},${g},${b},0.08)`;
+}
+export { StudentTable };
+import React, { useState } from 'react';
 import EditColumnModal from './EditColumnModal';
 import { EditIcon, TrashIcon } from './Icons';
 
-interface StudentTableProps {
-  students: Student[];
-  activeSubject: Subject;
-  onUpdateStudentData: (studentId: string, columnId: string, value: any) => void;
-  onDeleteStudent: (studentId: string, studentName: string) => void;
-  onDeleteColumn: (columnId: string, columnName: string) => void;
-  onEditColumn: (columnId: string, updatedData: Partial<Column>) => void;
-  onFillColumn: (columnId: string, value: any) => void;
-  startIndex: number;
-  apiKey: string | null;
-  onRequestApiKey: () => void;
+interface ColumnType {
+  id: string | number;
+  name: string;
+  type?: string;
+  options?: string[];
 }
 
-const StudentTable: React.FC<StudentTableProps> = ({ students, activeSubject, onUpdateStudentData, onDeleteStudent, onDeleteColumn, onEditColumn, onFillColumn, startIndex }) => {
-  const [editingCell, setEditingCell] = useState<{ studentId: string, columnId: string } | null>(null);
-  const [editingColumn, setEditingColumn] = useState<Column | null>(null);
-  const [editValue, setEditValue] = useState<any>('');
-  // ...existing code...
-  // ...existing code...
-  const inputRef = useRef<HTMLInputElement>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
+interface StudentType {
+  id: string | number;
+  name: string;
+  records?: Record<string, any>;
+  serial?: number;
+}
 
-  const { columns } = activeSubject;
-  const themeColor = activeSubject.themeColor || '#2E8540';
+interface StudentTableProps {
+  columns: ColumnType[];
+  students: StudentType[];
+  onEditColumn: (id: string | number, updatedData: any) => void;
+  onDeleteColumn: (id: string | number, name: string) => void;
+  onFillColumn?: (id: string | number, value: any) => void;
+  onUpdateStudentData?: (studentId: string | number, colId: string | number, value: any) => void;
+  onDeleteStudent?: (studentId: string | number, name: string) => void;
+  themeColor?: string;
+}
 
-  useEffect(() => {
-    if (editingCell) {
-        if (inputRef.current) inputRef.current.focus();
-        if (selectRef.current) selectRef.current.focus();
-    }
-  }, [editingCell]);
-  
-  const handleUpdate = () => {
-    if (!editingCell) return;
-    
-    let finalValue = editValue;
-    const column = columns.find(c => c.id === editingCell.columnId);
-    if(column?.type === ColumnType.NUMBER) {
-        finalValue = parseFloat(editValue);
-        if(isNaN(finalValue)) finalValue = null; // Store as null if invalid number
-    }
-    
-    onUpdateStudentData(editingCell.studentId, editingCell.columnId, finalValue);
-  };
-
-  const handleCellClick = (student: Student, column: Column) => {
-    if (editingCell && (editingCell.studentId !== student.id || editingCell.columnId !== column.id)) {
-        handleUpdate();
-    }
-
-    setEditingCell({ studentId: student.id, columnId: column.id });
-    const currentValue = student.records[column.id];
-
-    if(column.type === ColumnType.CHECKBOX) {
-        onUpdateStudentData(student.id, column.id, !currentValue);
-        setEditingCell(null);
-    } else {
-        setEditValue(currentValue ?? '');
-    }
-  };
-  
-  const handleSelectUpdate = (studentId: string, columnId: string, value: any) => {
-      onUpdateStudentData(studentId, columnId, value);
-      setEditingCell(null);
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent, student: Student, column: Column) => {
-    if (e.key === 'Escape') {
-      setEditingCell(null);
-    } else if (e.key === 'Enter') {
-      handleUpdate();
-      setEditingCell(null);
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      handleUpdate(); // Save current cell first
-
-      const studentIndex = students.findIndex(s => s.id === student.id);
-      const columnIndex = columns.findIndex(c => c.id === column.id);
-
-      if (studentIndex === -1 || columnIndex === -1) {
-        setEditingCell(null);
-        return;
-      }
-
-      let nextStudentIndex = studentIndex;
-      let nextColumnIndex = columnIndex;
-
-      if (e.shiftKey) { // Move backwards
-        nextColumnIndex--;
-        if (nextColumnIndex < 0) {
-          nextStudentIndex--;
-          nextColumnIndex = columns.length - 1;
-        }
-      } else { // Move forwards
-        nextColumnIndex++;
-        if (nextColumnIndex >= columns.length) {
-          nextStudentIndex++;
-          nextColumnIndex = 0;
-        }
-      }
-
-      if (students[nextStudentIndex] && columns[nextColumnIndex]) {
-        const nextStudent = students[nextStudentIndex];
-        const nextColumn = columns[nextColumnIndex];
-        handleCellClick(nextStudent, nextColumn);
-      } else {
-        // We're at the end or beginning of the table
-        setEditingCell(null);
-      }
-    }
-  };
-  
-  // ...existing code...
-
-
-  const renderCellContent = (student: Student, column: Column) => {
-    const isEditing = editingCell?.studentId === student.id && editingCell?.columnId === column.id;
-    const value = student.records[column.id];
-
-    if (isEditing) {
-      if (column.type === ColumnType.LIST && column.options) {
-        return (
-          <select
-            ref={selectRef}
-            value={value ?? ''}
-            onChange={(e) => handleSelectUpdate(student.id, column.id, e.target.value)}
-            onBlur={() => setEditingCell(null)}
-            onKeyDown={(e) => handleKeyDown(e, student, column)}
-            className="w-full h-full p-2 bg-white dark:bg-slate-700 border-2 rounded-md outline-none"
-            style={{ borderColor: themeColor }}
-          >
-            <option value="">اختر...</option>
-            {column.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        );
-      }
-      return (
-        <input
-          ref={inputRef}
-          type={column.type === ColumnType.NUMBER ? 'number' : column.type === ColumnType.DATE ? 'date' : 'text'}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={() => { handleUpdate(); setEditingCell(null); }}
-          onKeyDown={(e) => handleKeyDown(e, student, column)}
-          className="w-full h-full p-2 bg-white dark:bg-slate-700 border-2 rounded-md outline-none text-center"
-          style={{ borderColor: themeColor }}
-        />
-      );
-    }
-
-    if (column.type === ColumnType.CHECKBOX) {
-      return <input type="checkbox" checked={!!value} readOnly className="w-5 h-5 mx-auto block cursor-pointer"/>;
-    }
-    
-    return <span className="p-2 block w-full h-full">{value ?? ''}</span>;
-  };
-
-  if (students.length === 0 && startIndex === 0) { // Only show if it's the first page and no students
-    return <div className="text-center p-8 bg-white dark:bg-slate-800/50 rounded-lg shadow">لا يوجد طلاب في هذا الفصل. قم بإضافة طالب أو استيراد الطلاب للبدء.</div>;
-  }
+const StudentTable: React.FC<StudentTableProps> = (props) => {
+  const { columns, students, onEditColumn, onDeleteColumn, onFillColumn, onUpdateStudentData, onDeleteStudent, themeColor } = props;
+  const [editingColumn, setEditingColumn] = useState<ColumnType | null>(null);
 
   return (
-    <React.Fragment>
-      <div className="overflow-x-auto bg-white dark:bg-slate-800 shadow-xl rounded-lg">
-  <table className="w-full text-xs text-right text-slate-500 dark:text-slate-400">
-          <thead className="text-[10px] text-white uppercase" style={{ backgroundColor: themeColor }}>
+    <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
+      <div
+        className="w-full bg-white dark:bg-slate-900 shadow border-2 border-slate-300 dark:border-slate-700 overflow-x-auto custom-scroll"
+        style={{ direction: 'rtl', minHeight: '60vh', boxSizing: 'border-box', maxWidth: '100vw', margin: 0, padding: 0, border: 'none', borderRadius: 0 }}
+      >
+        <table
+          className="min-w-full table-auto text-xs md:text-sm"
+          style={{ width: '100%', tableLayout: 'auto', minWidth: 600 }}
+        >
+          <thead className="text-[10px] sm:text-xs md:text-sm text-white uppercase sticky top-0 z-30"
+            style={{
+              backgroundColor: themeColor || '#2E8540',
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+              fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+              boxShadow: '0 2px 8px -2px #0002',
+              color: '#fff',
+            }}>
             <tr>
-              <th scope="col" className="px-4 py-2 sticky start-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm min-w-[120px] text-right z-20 text-slate-800 dark:text-slate-100 text-xs" style={{ backgroundColor: '' }}>
-                اسم الطالب
-              </th>
-              {columns.map((col) => {
-                const checkedCount = col.type === ColumnType.CHECKBOX ? students.filter(s => !!s.records[col.id]).length : 0;
-                const allChecked = col.type === ColumnType.CHECKBOX && students.length > 0 ? checkedCount === students.length : false;
-                const isIndeterminate = col.type === ColumnType.CHECKBOX ? checkedCount > 0 && checkedCount < students.length : false;
-
-                return (
-                  <th key={col.id} scope="col" className="px-4 py-3 min-w-[150px] group align-top">
-                    <div className="flex items-center justify-between mb-2 h-5">
-                      <span className="font-semibold text-[10px]">{col.name}</span>
-                      <div className="flex items-center gap-1">
-                          <button onClick={() => setEditingColumn(col)} className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-200 hover:text-white" data-tooltip="تعديل العمود">
-                              <EditIcon className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => onDeleteColumn(col.id, col.name)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-200 hover:text-white" data-tooltip="حذف العمود">
-                              <TrashIcon className="w-4 h-4" />
-                          </button>
-                      </div>
+              <th className="px-1 sm:px-2 py-2 sticky right-0 bg-slate-100 dark:bg-slate-800/90 backdrop-blur-sm min-w-[60px] max-w-[60px] text-center z-30 text-slate-800 dark:text-slate-100 text-xs font-bold border-r-4 border-slate-300 shadow-lg" style={{ fontFamily: 'Noto Sans Arabic, Cairo, sans-serif', boxShadow: '2px 0 8px -2px #0002' }}>م</th>
+              <th className="px-1 sm:px-2 py-2 sticky right-0 bg-slate-100 dark:bg-slate-800/90 backdrop-blur-sm min-w-[140px] max-w-[220px] text-right z-30 text-slate-800 dark:text-slate-100 text-xs font-bold border-r-4 border-slate-300 shadow-lg" style={{ fontFamily: 'Noto Sans Arabic, Cairo, sans-serif', boxShadow: '2px 0 8px -2px #0002' }}>اسم الطالب</th>
+              {columns.map((col) => (
+                <th key={col.id} className="px-1 sm:px-2 py-2 min-w-[80px] md:min-w-[120px] max-w-[180px] text-center align-top border-slate-200 border-l last:border-l-0 group relative text-xs font-bold" style={{ fontFamily: 'Noto Sans Arabic, Cairo, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="flex flex-col items-center gap-0.5 w-full">
+                    <span className="font-semibold text-xs break-words w-full" title={col.name}>{col.name}</span>
+                    <div className="flex gap-4 justify-center items-center mt-1">
+                      <button
+                        className="inline-flex items-center justify-center ms-1 text-lg text-gray-400 hover:text-emerald-600 opacity-90 hover:opacity-100 transition-all duration-150 p-2 rounded-full"
+                        title="تعديل اسم العمود"
+                        aria-label="تعديل اسم العمود"
+                        onClick={() => setEditingColumn(col)}
+                        style={{ verticalAlign: 'middle', minWidth: 36, minHeight: 36 }}>
+                        <EditIcon className="w-6 h-6" />
+                      </button>
+                      <button
+                        className="inline-flex items-center justify-center ms-1 text-lg text-gray-400 hover:text-red-500 opacity-90 hover:opacity-100 transition-all duration-150 p-2 rounded-full"
+                        title="حذف العمود"
+                        aria-label="حذف العمود"
+                        onClick={() => onDeleteColumn(col.id, col.name)}
+                        style={{ verticalAlign: 'middle', minWidth: 36, minHeight: 36 }}>
+                        <TrashIcon className="w-6 h-6" />
+                      </button>
                     </div>
-                    {/* Fill input area */}
-                    <div className="h-8">
-                       {col.type === ColumnType.CHECKBOX ? (
-                        <div className="flex justify-center items-center h-full">
-                          <input
-                            type="checkbox"
-                            title="تحديد/إلغاء تحديد الكل"
-                            className="w-4 h-4 text-emerald-400 bg-slate-100 border-slate-300 rounded focus:ring-offset-slate-700 focus:ring-1 focus:ring-emerald-400"
-                            checked={allChecked}
-                            ref={el => { if (el) el.indeterminate = isIndeterminate; }}
-                            onChange={() => onFillColumn(col.id, !allChecked)}
-                          />
-                        </div>
-                      ) : col.type === ColumnType.LIST && col.options ? (
-                        <select
-                          className="w-full p-1 text-[10px] bg-black/20 border border-white/20 rounded text-white"
-                          value="" // Controlled component to allow reset
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              onFillColumn(col.id, e.target.value);
-                            }
-                          }}
-                        >
-                          <option value="" disabled>تعبئة للكل...</option>
-                          {col.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                      ) : (
+                    {col.type === 'قائمة' || col.type === 'LIST' ? (
+                      <select
+                        className="w-full mt-1 p-1 text-xs text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+                        defaultValue=""
+                        onChange={e => {
+                          const value = e.target.value;
+                          if (value !== '') {
+                            onFillColumn && onFillColumn(col.id, value);
+                            e.target.selectedIndex = 0;
+                          }
+                        }}
+                        style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+                      >
+                        <option value="">تعميم لكل الطلاب...</option>
+                        {(col.options || []).map((opt: string) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    ) : col.type === 'مربع اختيار' || col.type === 'CHECKBOX' ? (
+                      <div className="flex gap-1 mt-1 justify-center items-center">
                         <input
-                          type={col.type === ColumnType.NUMBER ? 'number' : col.type === ColumnType.DATE ? 'date' : 'text'}
-                          className="w-full p-1 text-[10px] text-center bg-black/20 border border-white/20 rounded text-white placeholder-slate-300"
-                          placeholder="تعبئة للكل..."
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.currentTarget.value) {
-                              onFillColumn(col.id, e.currentTarget.value);
-                              e.currentTarget.value = '';
-                            }
-                          }}
+                          type="checkbox"
+                          onChange={e => onFillColumn && onFillColumn(col.id, e.target.checked)}
+                          title="تعميم تفعيل/إلغاء الكل"
+                          className="w-5 h-5 sm:w-6 sm:h-6 accent-emerald-600"
                         />
-                      )}
-                    </div>
-                  </th>
-                )})}
-               <th scope="col" className="px-6 py-3 text-center">
-                  إجراءات
-               </th>
+                      </div>
+                    ) : (
+                      <input
+                        type={col.type === 'رقم' || col.type === 'NUMBER' ? 'number' : col.type === 'تاريخ' || col.type === 'DATE' ? 'date' : 'text'}
+                        className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+                        placeholder="تعميم لكل الطلاب"
+                        onChange={e => {
+                          const target = e.target as HTMLInputElement;
+                          let value: any = target.value;
+                          if (col.type === 'رقم' || col.type === 'NUMBER') value = value === '' ? null : parseFloat(value);
+                          if (col.type === 'تاريخ' || col.type === 'DATE') value = value || null;
+                          onFillColumn && onFillColumn(col.id, value);
+                        }}
+                        style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+                      />
+                    )}
+                  </div>
+                </th>
+              ))}
+              <th className="px-2 py-2 text-center text-xs" title="إجراءات">إجراءات</th>
             </tr>
           </thead>
           <tbody>
-            {students.map((student, index) => (
-              <tr key={student.id} className="bg-white border-b dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 group">
-                <th scope="row" className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap dark:text-white sticky start-0 bg-white dark:bg-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/40 z-10">
-                  <div className="flex items-center">
-                      <span className="inline-block w-6 text-center text-xs text-slate-500 dark:text-slate-400 me-2">{startIndex + index + 1}</span>
-                      <span>{student.name}</span>
-                  </div>
-                </th>
-                {columns.map((col) => (
-                  <td key={col.id} onClick={() => handleCellClick(student, col)} className="px-0 py-0 cursor-pointer h-14 hover:bg-green-50/50 dark:hover:bg-green-900/10 text-center">
-                    {renderCellContent(student, col)}
-                  </td>
-                ))}
-                <td className="px-6 py-4 text-center">
-                    <div className="flex items-center justify-center gap-3">
-                        {/* زر الذكاء الاصطناعي تم حذفه */}
-                        <button onClick={() => onDeleteStudent(student.id, student.name)} className="text-red-500 hover:text-red-700" data-tooltip="حذف الطالب">
-                            <TrashIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-                </td>
+            {students.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 3} className="text-center py-6 text-slate-400">لا يوجد طلاب</td>
               </tr>
-            ))}
+            ) : (
+              students.map((student, idx) => (
+                <tr key={student.id} className={"border-b last:border-b-0 " + (idx % 2 === 0 ? "bg-gray-50" : "bg-white") + " hover:bg-emerald-50 dark:hover:bg-slate-800/30 transition-colors text-xs"}>
+                  <td
+                    className="px-1 sm:px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap text-xs border-b-4 border-slate-300 z-20"
+                    style={{
+                      maxWidth: '60px',
+                      minWidth: '60px',
+                      boxShadow: '2px 0 8px -2px #0002',
+                      backgroundColor: getHeaderBg(themeColor)
+                    }}
+                  >
+                    {student.serial || idx + 1}
+                  </td>
+                  <td
+                    className="px-1 sm:px-2 py-2 sticky right-0 text-right font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap text-xs border-b-4 border-slate-300 z-20"
+                    style={{
+                      maxWidth: '220px',
+                      minWidth: '140px',
+                      boxShadow: '2px 0 8px -2px #0002',
+                      backgroundColor: getHeaderBg(themeColor)
+                    }}
+                  >
+                    {student.name}
+                  </td>
+                  {columns.map((col) => {
+                    const value = student.records?.[col.id];
+                    if (col.type === 'مربع اختيار' || col.type === 'CHECKBOX') {
+                      return (
+                        <td key={col.id} className="px-2 sm:px-4 py-3 text-center text-base bg-white dark:bg-slate-900 border-b border-slate-200">
+                          <input
+                            type="checkbox"
+                            checked={!!value}
+                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.checked)}
+                          />
+                        </td>
+                      );
+                    } else if (col.type === 'قائمة' || col.type === 'LIST') {
+                      return (
+                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
+                          <select
+                            value={value || ''}
+                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700"
+                          >
+                            <option value="">—</option>
+                            {(col.options || []).map((opt: string) => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        </td>
+                      );
+                    } else if (col.type === 'رقم' || col.type === 'NUMBER') {
+                      return (
+                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
+                          <input
+                            type="number"
+                            value={value !== undefined && value !== null ? value : ''}
+                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value === '' ? null : parseFloat(e.target.value))}
+                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                          />
+                        </td>
+                      );
+                    } else if (col.type === 'تاريخ' || col.type === 'DATE') {
+                      return (
+                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
+                          <input
+                            type="date"
+                            value={value || ''}
+                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
+                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                          />
+                        </td>
+                      );
+                    } else {
+                      return (
+                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
+                          <input
+                            type="text"
+                            value={value !== undefined && value !== null ? value : ''}
+                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                          />
+                        </td>
+                      );
+                    }
+                  })}
+                  <td className="px-2 py-3 text-center text-base bg-slate-50 dark:bg-slate-800 border-b border-slate-200">
+                    <button
+                      className="text-red-500 hover:underline text-xs"
+                      title={`حذف الطالب: ${student.name}`}
+                      aria-label={`حذف الطالب: ${student.name}`}
+                      onClick={() => onDeleteStudent && onDeleteStudent(student.id, student.name)}
+                    >
+                      حذف
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-      </div>
-  {/* FeedbackModal تم حذفه */}
-      {editingColumn && (
+        {editingColumn && (
           <EditColumnModal
-            column={editingColumn}
+            column={editingColumn as any}
             onClose={() => setEditingColumn(null)}
             onSave={(updatedData) => {
-                onEditColumn(editingColumn.id, updatedData);
-                setEditingColumn(null);
+              onEditColumn(editingColumn!.id, updatedData);
+              setEditingColumn(null);
             }}
           />
-      )}
-    </React.Fragment>
+        )}
+        <style>{`
+          .custom-scroll::-webkit-scrollbar {
+            height: 8px;
+          }
+          .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+          }
+          .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+          }
+        `}</style>
+      </div>
+    </div>
   );
-};
-
-export default StudentTable;
+}

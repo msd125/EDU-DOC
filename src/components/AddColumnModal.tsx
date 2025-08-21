@@ -7,18 +7,26 @@ interface AddColumnModalProps {
 }
 
 const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn }) => {
-  const [name, setName] = useState('');
+  const [count, setCount] = useState(1);
   const [type, setType] = useState<ColumnType>(ColumnType.NUMBER);
   const [options, setOptions] = useState('');
+  const [mainLabel, setMainLabel] = useState('');
+  // لم يعد هناك حاجة لقيم منفصلة لكل حقل
+
+  const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = Math.max(1, parseInt(e.target.value) || 1);
+    setCount(val);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      let finalOptions: string[] | undefined = undefined;
-      if (type === ColumnType.LIST && options.trim()) {
-        finalOptions = options.split(',').map(opt => opt.trim()).filter(Boolean);
-      }
-      onAddColumn(name.trim(), type, finalOptions);
+    let finalOptions: string[] | undefined = undefined;
+    if (type === ColumnType.LIST && options.trim()) {
+      finalOptions = options.split(',').map(opt => opt.trim()).filter(Boolean);
+    }
+    if (!mainLabel.trim()) return;
+    for (let i = 0; i < count; i++) {
+      onAddColumn(mainLabel.trim(), type, finalOptions);
     }
   };
 
@@ -29,18 +37,30 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="columnName" className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">اسم العمود</label>
+              <label htmlFor="mainLabel" className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">{mainLabel || 'عنوان الحقل الرئيسي'}</label>
               <input
                 type="text"
-                id="columnName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                id="mainLabel"
+                value={mainLabel}
+                onChange={e => setMainLabel(e.target.value)}
                 className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white"
                 required
               />
             </div>
             <div>
-              <label htmlFor="columnType" className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">نوع العمود</label>
+              <label htmlFor="columnCount" className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">عدد الحقول</label>
+              <input
+                type="number"
+                id="columnCount"
+                min={1}
+                value={count}
+                onChange={handleCountChange}
+                className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="columnType" className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">نوع الحقول</label>
               <select
                 id="columnType"
                 value={type}
@@ -63,6 +83,17 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
                 />
               </div>
             )}
+            <div className="flex flex-col gap-0 mt-4">
+              {Array.from({ length: count }).map((_, i) => (
+                <input
+                  key={i}
+                  type={type === ColumnType.NUMBER ? 'number' : type === ColumnType.DATE ? 'date' : 'text'}
+                  className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-none focus:ring-emerald-500 focus:border-emerald-500 w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white"
+                  style={{marginBottom: 0, borderRadius: 0, borderTop: i === 0 ? '' : 'none'}}
+                  disabled
+                />
+              ))}
+            </div>
           </div>
           <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button

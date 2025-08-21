@@ -1,9 +1,18 @@
-<<<<<<< HEAD
+html, body {
+	overflow-x: hidden;
+}
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+body {
+	min-height: 100vh;
+	overflow-y: auto;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-=======
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
->>>>>>> a66411d (إضافة ميزة تسجيل مستخدم جديد في شاشة الدخول مع حفظ المستخدمين في localStorage)
