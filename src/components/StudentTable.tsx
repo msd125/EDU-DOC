@@ -62,10 +62,7 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
 
   return (
     <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
-      <div className="flex flex-wrap gap-2 items-center mb-2">
-        <span className="font-bold text-xs ms-4">تمييز صفوف:</span>
-        <span className="text-xs">انقر على أي صف لتظليله/إلغاء تظليله. انقر على أي خلية بيانات لتخصيصها.</span>
-      </div>
+  {/* تعليمات تمييز الصفوف حذفت بناءً على طلب المستخدم */}
       <div
         className="w-full bg-white dark:bg-slate-900 shadow border-2 border-slate-300 dark:border-slate-700 overflow-x-auto custom-scroll"
         style={{ direction: 'rtl', minHeight: '60vh', boxSizing: 'border-box', maxWidth: '100vw', margin: 0, padding: 0, border: 'none', borderRadius: 0 }}
