@@ -397,13 +397,18 @@ const App: React.FC = () => {
             }
           }}
           onDeleteSubject={(cls, sub) => {
-            if (window.confirm('هل أنت متأكد من حذف المادة؟ سيتم حذف جميع بياناتها.')) {
-              setClasses(prev => prev.map(c => c.id === cls.id ? {
-                ...c,
-                subjects: c.subjects.filter(s => s.id !== sub.id)
-              } : c));
-              toast.success('تم حذف المادة.');
-            }
+            setConfirmation({
+              message: 'هل أنت متأكد من حذف المادة؟ سيتم حذف جميع بياناتها.',
+              confirmLabel: 'تأكيد الحذف',
+              onConfirm: () => {
+                setClasses(prev => prev.map(c => c.id === cls.id ? {
+                  ...c,
+                  subjects: c.subjects.filter(s => s.id !== sub.id)
+                } : c));
+                toast.success('تم حذف المادة.');
+                setConfirmation(null);
+              }
+            });
           }}
           onAddClass={(name, type) => {
             setClasses(prev => ([

@@ -11,7 +11,7 @@ function getHeaderBg(color?: string) {
   return `rgba(${r},${g},${b},0.08)`;
 }
 export { StudentTable };
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditColumnModal from './EditColumnModal';
 import { EditIcon, TrashIcon } from './Icons';
 
@@ -44,14 +44,34 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
   const { columns, students, onEditColumn, onDeleteColumn, onFillColumn, onUpdateStudentData, onDeleteStudent, themeColor } = props;
   const [editingColumn, setEditingColumn] = useState<ColumnType | null>(null);
 
+  // إضافة state للتحكم في حجم النص ولونه وتمييز الصفوف
+  // تحكم في الصفوف المظللة
+  // حفظ واسترجاع الصفوف المظللة من localStorage
+  const [highlightedRows, setHighlightedRows] = useState<(string | number)[]>(() => {
+    try {
+      const saved = localStorage.getItem('highlightedRows');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('highlightedRows', JSON.stringify(highlightedRows));
+  }, [highlightedRows]);
+
   return (
     <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
+      <div className="flex flex-wrap gap-2 items-center mb-2">
+        <span className="font-bold text-xs ms-4">تمييز صفوف:</span>
+        <span className="text-xs">انقر على أي صف لتظليله/إلغاء تظليله. انقر على أي خلية بيانات لتخصيصها.</span>
+      </div>
       <div
         className="w-full bg-white dark:bg-slate-900 shadow border-2 border-slate-300 dark:border-slate-700 overflow-x-auto custom-scroll"
         style={{ direction: 'rtl', minHeight: '60vh', boxSizing: 'border-box', maxWidth: '100vw', margin: 0, padding: 0, border: 'none', borderRadius: 0 }}
       >
         <table
-          className="min-w-full table-auto text-xs md:text-sm"
+          className="min-w-full table-auto"
           style={{ width: '100%', tableLayout: 'auto', minWidth: 600 }}
         >
           <thead className="text-[10px] sm:text-xs md:text-sm text-white uppercase sticky top-0 z-30"
@@ -142,104 +162,136 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                 <td colSpan={columns.length + 3} className="text-center py-6 text-slate-400">لا يوجد طلاب</td>
               </tr>
             ) : (
-              students.map((student, idx) => (
-                <tr key={student.id} className={"border-b last:border-b-0 " + (idx % 2 === 0 ? "bg-gray-50" : "bg-white") + " hover:bg-emerald-50 dark:hover:bg-slate-800/30 transition-colors text-xs"}>
-                  <td
-                    className="px-1 sm:px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap text-xs border-b-4 border-slate-300 z-20"
-                    style={{
-                      maxWidth: '60px',
-                      minWidth: '60px',
-                      boxShadow: '2px 0 8px -2px #0002',
-                      backgroundColor: getHeaderBg(themeColor)
-                    }}
-                  >
-                    {student.serial || idx + 1}
-                  </td>
-                  <td
-                    className="px-1 sm:px-2 py-2 sticky right-0 text-right font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap text-xs border-b-4 border-slate-300 z-20"
-                    style={{
-                      maxWidth: '220px',
-                      minWidth: '140px',
-                      boxShadow: '2px 0 8px -2px #0002',
-                      backgroundColor: getHeaderBg(themeColor)
-                    }}
-                  >
-                    {student.name}
-                  </td>
-                  {columns.map((col) => {
-                    const value = student.records?.[col.id];
-                    if (col.type === 'مربع اختيار' || col.type === 'CHECKBOX') {
-                      return (
-                        <td key={col.id} className="px-2 sm:px-4 py-3 text-center text-base bg-white dark:bg-slate-900 border-b border-slate-200">
-                          <input
-                            type="checkbox"
-                            checked={!!value}
-                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.checked)}
-                          />
-                        </td>
-                      );
-                    } else if (col.type === 'قائمة' || col.type === 'LIST') {
-                      return (
-                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
-                          <select
-                            value={value || ''}
-                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
-                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700"
-                          >
-                            <option value="">—</option>
-                            {(col.options || []).map((opt: string) => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        </td>
-                      );
-                    } else if (col.type === 'رقم' || col.type === 'NUMBER') {
-                      return (
-                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
-                          <input
-                            type="number"
-                            value={value !== undefined && value !== null ? value : ''}
-                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value === '' ? null : parseFloat(e.target.value))}
-                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
-                          />
-                        </td>
-                      );
-                    } else if (col.type === 'تاريخ' || col.type === 'DATE') {
-                      return (
-                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
-                          <input
-                            type="date"
-                            value={value || ''}
-                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
-                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
-                          />
-                        </td>
-                      );
-                    } else {
-                      return (
-                        <td key={col.id} className="px-2 sm:px-4 py-2 text-center text-xs sm:text-base">
-                          <input
-                            type="text"
-                            value={value !== undefined && value !== null ? value : ''}
-                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
-                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
-                          />
-                        </td>
-                      );
+              students.map((student, idx) => {
+                const isHighlighted = highlightedRows.includes(student.id);
+                return (
+                  <tr
+                    key={student.id}
+                    className={
+                      "border-b last:border-b-0 transition-colors " +
+                      (isHighlighted ? "bg-yellow-100" : (idx % 2 === 0 ? "bg-gray-50" : "bg-white"))
                     }
-                  })}
-                  <td className="px-2 py-3 text-center text-base bg-slate-50 dark:bg-slate-800 border-b border-slate-200">
-                    <button
-                      className="text-red-500 hover:underline text-xs"
-                      title={`حذف الطالب: ${student.name}`}
-                      aria-label={`حذف الطالب: ${student.name}`}
-                      onClick={() => onDeleteStudent && onDeleteStudent(student.id, student.name)}
+                  >
+                    <td
+                      className="px-1 sm:px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap border-b-4 border-slate-300 z-20 cursor-pointer"
+                      style={{
+                        maxWidth: '60px',
+                        minWidth: '60px',
+                        boxShadow: '2px 0 8px -2px #0002',
+                        backgroundColor: getHeaderBg(themeColor)
+                      }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setHighlightedRows(rows =>
+                          rows.includes(student.id)
+                            ? rows.filter(id => id !== student.id)
+                            : [...rows, student.id]
+                        );
+                      }}
                     >
-                      حذف
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      {student.serial || idx + 1}
+                    </td>
+                    <td
+                      className="px-1 sm:px-2 py-2 sticky right-0 text-right font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap border-b-4 border-slate-300 z-20 text-sm md:text-xs"
+                      style={{
+                        maxWidth: '220px',
+                        minWidth: '140px',
+                        boxShadow: '2px 0 8px -2px #0002',
+                        backgroundColor: getHeaderBg(themeColor)
+                      }}
+                    >
+                      {student.name}
+                    </td>
+                    {columns.map((col) => {
+                      const value = student.records?.[col.id];
+                      const cellKey = `${student.id}_${col.id}`;
+                      // const style = cellStyles[cellKey] || { fontSize: 'text-base', fontColor: '#000000' };
+                      // تخصيص الخلية فقط عند النقر عليها
+                      // const handleCellClick = (e: React.MouseEvent) => {
+                      //   e.stopPropagation();
+                      //   setSelectedCell({ studentId: student.id, colId: col.id });
+                      // };
+                      if (col.type === 'مربع اختيار' || col.type === 'CHECKBOX') {
+                        return (
+                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-3 text-center bg-white dark:bg-slate-900 border-b border-slate-200 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!value}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.checked)}
+                            />
+                          </td>
+                        );
+                      } else if (col.type === 'قائمة' || col.type === 'LIST') {
+                        return (
+                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                            <select
+                              value={value || ''}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                              className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700"
+                            >
+                              <option value="">—</option>
+                              {(col.options || []).map((opt: string) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          </td>
+                        );
+                      } else if (col.type === 'رقم' || col.type === 'NUMBER') {
+                        return (
+                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                            <input
+                              type="number"
+                              value={value !== undefined && value !== null ? value : ''}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value === '' ? null : parseFloat(e.target.value))}
+                              className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                            />
+                          </td>
+                        );
+                      } else if (col.type === 'تاريخ' || col.type === 'DATE') {
+                        return (
+                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                            <input
+                              type="date"
+                              value={value || ''}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
+                              className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                            />
+                          </td>
+                        );
+                      } else {
+                        return (
+                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                            <input
+                              type="text"
+                              value={value !== undefined && value !== null ? value : ''}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                              className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                            />
+                          </td>
+                        );
+                      }
+                    })}
+                    <td className="px-2 py-3 text-center text-base bg-slate-50 dark:bg-slate-800 border-b border-slate-200">
+                      <button
+                        className="text-red-500 hover:underline text-xs"
+                        title={`حذف الطالب: ${student.name}`}
+                        aria-label={`حذف الطالب: ${student.name}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          onDeleteStudent && onDeleteStudent(student.id, student.name);
+                        }}
+                      >
+                        حذف
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

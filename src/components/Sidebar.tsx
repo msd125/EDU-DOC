@@ -296,7 +296,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* نافذة تأكيد الحذف */}
       {confirmDelete && (
         <ConfirmModal
-          message={`هل أنت متأكد من حذف ${confirmDelete.type === 'class' ? 'الفصل' : 'المادة'}: "${confirmDelete.name}"؟ سيتم حذف جميع بياناتها نهائياً.`}
+          message={
+            confirmDelete.type === 'class'
+              ? `⚠️ هل أنت متأكد أنك تريد حذف الفصل "${confirmDelete.name}"؟\nسيتم حذف جميع بيانات الفصل بشكل نهائي ولن تتمكن من استعادتها لاحقًا.\nإذا كنت متأكدًا، اضغط "تأكيد الحذف". إذا لم تكن متأكدًا، اضغط "إلغاء".`
+              : `⚠️ هل أنت متأكد أنك تريد حذف المادة "${confirmDelete.name}"؟\nسيتم حذف جميع بيانات المادة بشكل نهائي ولن تتمكن من استعادتها لاحقًا.\nإذا كنت متأكدًا، اضغط "تأكيد الحذف". إذا لم تكن متأكدًا، اضغط "إلغاء".`
+          }
           onConfirm={() => {
             if (confirmDelete.type === 'class') {
               onDeleteClass(confirmDelete.classId, confirmDelete.name);
