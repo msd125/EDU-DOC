@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Class, Subject, ColumnType, Settings } from '../types';
-import { StudentTable } from './StudentTable';
+import { StudentTable, getContrastColor } from './StudentTable';
 import MainToolbar from './MainToolbar';
 import ClassSubjectFilters from './ClassSubjectFilters';
 import AddColumnModal from './AddColumnModal';
@@ -59,15 +59,31 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     html += `<h2 style='text-align:center;margin-bottom:16px;'>${adminReportName || ''}</h2>`;
     // Ensure themeColor is valid hex
     let pdfColor = themeColor || '#2E8540';
+    // إذا كان اللون أبيض أو شفاف أو غير محدد، استخدم لون غامق افتراضي
+    if (!pdfColor || pdfColor === '#fff' || pdfColor === '#ffffff' || pdfColor === '#FFF' || pdfColor === '#FFFFFF' || pdfColor === 'white' || pdfColor === 'transparent') {
+      pdfColor = '#2E8540';
+    }
     if (!/^#[0-9A-Fa-f]{6}$/.test(pdfColor)) {
       if (/^#[0-9A-Fa-f]{3}$/.test(pdfColor)) {
-        pdfColor = '#' + pdfColor.substring(1).split('').map(x => x + x).join('');
+        pdfColor = '#' + pdfColor.substring(1).split('').map((x:any) => x + x).join('');
       } else {
         pdfColor = '#2E8540';
       }
     }
     html += `<table border='1' cellspacing='0' cellpadding='4' style='width:100%;border-collapse:collapse;margin-bottom:24px;'>`;
-    html += '<tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:#fff;text-align:center;font-weight:bold;">${h}</th>`).join('') + '</tr>';
+    // دالة التباين
+    function getContrastColor(hex) {
+      if (!hex) return '#fff';
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+      return luminance > 170 ? '#222' : '#fff';
+    }
+    html += '<tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;">${h}</th>`).join('') + '</tr>';
     body.forEach(row => {
       html += '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
     });
@@ -75,7 +91,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     // Signers table with signature column
     html += `<table border='1' cellspacing='0' cellpadding='4' style='width:70%;border-collapse:collapse;margin:auto;'>`;
     html += `<tr>` +
-      [`م`, `المنصب`, `اسم الموقع`, `التوقيع`].map(h => `<th style=\"background:${pdfColor} !important;color:#fff;text-align:center;font-weight:bold;\">${h}</th>`).join('') +
+      [`م`, `المنصب`, `اسم الموقع`, `التوقيع`].map(h => `<th style=\"background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;\">${h}</th>`).join('') +
       `</tr>`;
     adminSigners.filter((s: any) => s.role || s.name).forEach((s: any, idx: number) => {
       html += `<tr><td>${idx + 1}</td><td>${s.role}</td><td>${s.name}</td><td style='width:120px;'></td></tr>`;
@@ -84,7 +100,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     html += '</div>';
     const win = window.open('', '_blank');
     if (win) {
-      const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',Tahoma,Arial,sans-serif;}\nth{color:#fff !important;}\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
+  const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',Tahoma,Arial,sans-serif;}\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
       win.document.write(`<html><head><title>${adminReportName || ''}</title><style>${style}</style></head><body>${html}</body></html>`);
       win.document.close();
       win.print();
@@ -430,7 +446,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr>
-            ${tableHeader.map(h => '<th style="border: 1px solid #333; padding: 8px; background-color: ' + themeColor + '; color: white; text-align: center; font-weight: bold;">' + h + '</th>').join('')}
+            ${tableHeader.map(h => `<th style="border: 1px solid #333; padding: 8px; background-color: ${themeColor}; color: ${getContrastColor(themeColor)}; text-align: center; font-weight: bold;">${h}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
@@ -467,12 +483,12 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
 
   if (!activeClass || !activeSubject) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-[70vh] min-h-[350px] text-center p-2 bg-white dark:bg-slate-800/50 rounded-xl shadow-sm m-0">
-        <ClipboardListIcon className="w-16 h-16 text-slate-400 dark:text-slate-500 mb-4" />
-        <h2 className="text-base font-bold text-slate-700 dark:text-slate-300">
+  <div className="flex flex-col items-center justify-center w-full h-[70vh] min-h-[350px] text-center p-2 bg-white rounded-xl shadow-sm m-0">
+  <ClipboardListIcon className="w-16 h-16 text-slate-400 mb-4" />
+  <h2 className="text-base font-bold text-slate-700">
           {activeClass ? 'مرحباً بك في فصل ' + activeClass.name : 'مرحباً بك في سجل الدرجات'}
         </h2>
-        <p className="mt-2 max-w-md text-xs text-slate-500 dark:text-slate-400">
+  <p className="mt-2 max-w-md text-xs text-slate-500">
           {activeClass ? 'الرجاء تحديد مادة دراسية من القائمة الجانبية، أو إضافة مادة جديدة للبدء في رصد الدرجات.' : 'الرجاء تحديد فصل دراسي أو إنشاء فصل جديد من القائمة الجانبية للبدء.'}
         </p>
         {/* إظهار التول بار دائمًا */}
@@ -529,14 +545,14 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
 
       {isAdminModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-10 max-w-2xl w-full relative" style={{minWidth:'520px', maxWidth:'700px'}}>
+          <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-2xl w-full relative" style={{minWidth:'520px', maxWidth:'700px'}}>
             <button className="absolute left-3 top-3 text-slate-500 hover:text-red-500 text-xl font-bold" onClick={() => setIsAdminModalOpen(false)}>&times;</button>
-            <h2 className="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100">تصدير كشف منسوبـي المدرسة</h2>
-            <div className="mb-4 text-slate-700 dark:text-slate-200 text-sm">
+            <h2 className="text-lg font-bold mb-4 text-slate-800">تصدير كشف منسوبـي المدرسة</h2>
+            <div className="mb-4 text-slate-700 text-sm">
               <label className="block mb-2 font-semibold">اسم الكشف:</label>
               <div className="flex gap-2 mb-4">
                 <div className="flex-[2] flex items-center gap-2">
-                  <select className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" value={adminReportName} onChange={e => setAdminReportName(e.target.value)}>
+                  <select className="w-full px-3 py-2 rounded border border-slate-300 bg-slate-50 text-sm" value={adminReportName} onChange={e => setAdminReportName(e.target.value)}>
                     {reportNames.map((name, idx) => (
                       <option key={idx} value={name}>{name}</option>
                     ))}
@@ -552,7 +568,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                     }}>×</button>
                   )}
                 </div>
-                <input type="text" className="flex-[2] px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" value={newReportName} onChange={e => setNewReportName(e.target.value)} placeholder="إضافة اسم جديد..." />
+                <input type="text" className="flex-[2] px-3 py-2 rounded border border-slate-300 bg-slate-50 text-sm" value={newReportName} onChange={e => setNewReportName(e.target.value)} placeholder="إضافة اسم جديد..." />
                 <button className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold" onClick={() => {
                   if (newReportName && !reportNames.includes(newReportName)) {
                     setReportNames([...reportNames, newReportName]);
@@ -636,8 +652,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       </div>
 
       {totalStudents > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center mt-4 p-2 bg-white dark:bg-slate-800/50 rounded-lg shadow-md">
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-2 sm:mb-0">
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-4 p-2 bg-white rounded-lg shadow-md">
+            <div className="flex items-center gap-2 text-sm text-slate-600 mb-2 sm:mb-0">
                 <span>عرض</span>
                 <select 
                     value={rowsPerPage} 
@@ -645,7 +661,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                         setRowsPerPage(Number(e.target.value));
                         setCurrentPage(1); // Reset to first page
                     }}
-                    className="p-1 border rounded bg-slate-50 dark:bg-slate-700 dark:border-slate-600 focus:ring-1 focus:ring-emerald-500"
+                    className="p-1 border rounded bg-slate-50 focus:ring-1 focus:ring-emerald-500"
                 >
                     <option value="5">5</option>
                     <option value="10">10</option>
@@ -656,7 +672,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                 <span>صفوف</span>
             </div>
 
-            <span className="text-sm text-slate-600 dark:text-slate-400 mb-2 sm:mb-0">
+            <span className="text-sm text-slate-600 mb-2 sm:mb-0">
                 عرض {Math.min(startIndex + 1, totalStudents)}-{Math.min(endIndex, totalStudents)} من {totalStudents}
             </span>
 
@@ -664,7 +680,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                 <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="الصفحة السابقة"
                 >
                     <ChevronRightIcon className="w-5 h-5" />
@@ -675,7 +691,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                 <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage >= totalPages || totalStudents === 0}
-                    className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="الصفحة التالية"
                 >
                     <ChevronLeftIcon className="w-5 h-5" />

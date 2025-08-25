@@ -11,13 +11,13 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ settings, currentUser, onOpenSettings, onLogout }) => {
     return (
-        <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700/50 p-4 flex justify-between items-center z-20 shrink-0">
+    <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 shrink-0">
             <div className="flex items-center gap-4">
                 {/* زر القائمة (سايدبار) تم إزالته */}
                                 <div>
-                                        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{settings.schoolName}</h1>
+                                        <h1 className="text-xl font-bold text-slate-800">{settings.schoolName}</h1>
                                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                                        <span className="text-sm text-slate-500 dark:text-slate-400">مرحباً</span>
+                                                                                        <span className="text-sm text-slate-500">مرحباً</span>
                                                                                         <span
                                                                                             className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white font-bold text-base"
                                                                                             style={{ backgroundColor: '#2E8540' }}
@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ settings, currentUser, onOpenSettings, 
                                                                                         >
                                                                                             {(currentUser && currentUser.trim().charAt(0)) || 'م'}
                                                                                         </span>
-                                                                                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                                                                        <span className="text-sm font-semibold text-slate-800">
                                                                                             {currentUser || 'المستخدم'}
                                                                                         </span>
                                                                                 </div>

@@ -1,3 +1,47 @@
+type ColorThemeGroupProps = {
+  activeSubject: Subject;
+  onUpdateThemeColor: (classId: string, subjectId: string, color: string) => void;
+  classId: string;
+};
+function ColorThemeGroup({ activeSubject, onUpdateThemeColor, classId }: ColorThemeGroupProps) {
+  const [showColors, setShowColors] = useState(false); // مطوي دائمًا افتراضيًا
+  const oliveColor = '#2E8540';
+  return (
+  <div className="space-y-2 border-t border-slate-200 mt-2 rounded-lg">
+      <button
+        onClick={() => setShowColors(!showColors)}
+        className="w-full flex justify-between items-center p-2 text-sm text-right rounded-t-lg"
+        style={{ backgroundColor: oliveColor, color: '#fff' }}
+      >
+        <span className="font-bold flex items-center gap-2">
+          <PaletteIcon className="w-5 h-5" />
+          تنسيق الألوان
+        </span>
+        {showColors ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+      </button>
+      {showColors && (
+  <div className="px-2 pt-1 pb-2 bg-white rounded-b-lg">
+          <p className="text-xs mb-2 text-slate-700">اختر لوناً لتمييز رأس الجدول في التقارير.</p>
+          <div className="flex flex-wrap gap-2">
+            {THEME_COLORS.map(color => (
+              <button
+                key={color}
+                onClick={() => onUpdateThemeColor(classId, activeSubject.id, color)}
+                className={'w-7 h-7 rounded-full cursor-pointer transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center ' + (activeSubject.themeColor === color ? 'ring-2 ring-offset-2 ring-emerald-700' : 'ring-1 ring-slate-300')}
+                style={{ backgroundColor: color }}
+                aria-label={'Select color ' + color}
+              >
+                {activeSubject.themeColor === color && (
+                  <CheckIcon className="w-4 h-4 text-white" style={{ mixBlendMode: 'difference' }}/>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 import React, { useState } from 'react';
 import { Class, Subject, ColumnType } from '../types';
 import { 
@@ -98,7 +142,7 @@ const ReportTheme: React.FC<{
   const [showColors, setShowColors] = useState(false); // مطوي دائماً افتراضياً
   const oliveColor = '#2E8540';
   return (
-    <div className="space-y-2 border-t border-slate-200 dark:border-slate-700 mt-2 rounded-lg">
+  <div className="space-y-2 border-t border-slate-200 mt-2 rounded-lg">
       <button
         onClick={() => setShowColors(!showColors)}
         className="w-full flex justify-between items-center p-2 text-sm text-right rounded-t-lg"
@@ -111,14 +155,14 @@ const ReportTheme: React.FC<{
         {showColors ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
       </button>
       {showColors && (
-        <div className="px-2 pt-1 pb-2 bg-white dark:bg-slate-800 rounded-b-lg">
-          <p className="text-xs mb-2 text-slate-700 dark:text-slate-300">اختر لوناً لتمييز رأس الجدول في التقارير.</p>
+  <div className="px-2 pt-1 pb-2 bg-white rounded-b-lg">
+          <p className="text-xs mb-2 text-slate-700">اختر لوناً لتمييز رأس الجدول في التقارير.</p>
           <div className="flex flex-wrap gap-2">
             {THEME_COLORS.map(color => (
               <button
                 key={color}
                 onClick={() => onUpdateThemeColor(classId, activeSubject.id, color)}
-                className={'w-7 h-7 rounded-full cursor-pointer transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center ' + (activeSubject.themeColor === color ? 'ring-2 ring-offset-2 ring-emerald-700' : 'ring-1 ring-slate-300 dark:ring-slate-600')}
+                className={'w-7 h-7 rounded-full cursor-pointer transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center ' + (activeSubject.themeColor === color ? 'ring-2 ring-offset-2 ring-emerald-700' : 'ring-1 ring-slate-300')}
                 style={{ backgroundColor: color }}
                 aria-label={'Select color ' + color}
               >
@@ -146,17 +190,17 @@ const ReportBuilder: React.FC<{
 }> = ({ activeClass, activeSubject, onAddColumn, onDeleteColumn, hideTitle }) => {
   // تصميم احترافي لمكونات السجل مع تشك بوكس
   return (
-    <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 mt-2 rounded-lg">
+  <div className="space-y-4 border-t border-slate-200 mt-2 rounded-lg">
       {!hideTitle && (
-        <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-200 mb-2 mt-2">
+  <div className="flex items-center gap-2 font-bold text-slate-700 mb-2 mt-2">
           <ListIcon className="w-5 h-5" />
           <span>مكونات السجل</span>
         </div>
       )}
       <div className="space-y-4">
         {assessmentCategories.map((group, idx) => (
-          <div key={group.title} className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-2">
-            <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-200 mb-2">
+          <div key={group.title} className="bg-slate-50 rounded-lg shadow p-2">
+            <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
               <BookOpenIcon className="w-5 h-5 text-indigo-500" />
               <span>{group.title} <span className="text-xs text-slate-400">({group.items.length})</span></span>
             </div>
@@ -164,7 +208,7 @@ const ReportBuilder: React.FC<{
               {group.items.map((item, i) => {
                 const checked = !!activeSubject.columns.find(c => c.name === item.name);
                 return (
-                  <li key={item.name} className="flex items-center gap-2 bg-white dark:bg-slate-700 rounded px-2 py-1 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                  <li key={item.name} className="flex items-center gap-2 bg-white rounded px-2 py-1 hover:bg-indigo-50 transition">
                     <input
                       type="checkbox"
                       checked={checked}
@@ -327,17 +371,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         {isOpen ? <XIcon className="w-5 h-5" /> : <span className="text-lg">☰</span>}
       </button>
 
-      <aside className={'fixed inset-y-0 right-0 w-full max-w-xs sm:w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-full border-s-2 border-slate-200 dark:border-slate-700 transform transition-transform duration-300 ease-in-out z-40 ' + (isOpen ? 'translate-x-0' : 'translate-x-full')}>
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+  <aside className={'fixed inset-y-0 right-0 w-full max-w-xs sm:w-64 bg-white shadow-lg flex flex-col h-full border-s-2 border-slate-200 transform transition-transform duration-300 ease-in-out z-40 ' + (isOpen ? 'translate-x-0' : 'translate-x-full')}>
+  <div className="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 className="text-xs sm:text-sm font-bold">الفصول والمواد الدراسية</h2>
-          <button onClick={onClose} className="p-2 sm:p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 text-lg">
+          <button onClick={onClose} className="p-2 sm:p-1 rounded-full hover:bg-slate-200 text-lg">
             <XIcon className="w-6 h-6 sm:w-5 sm:h-5" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
             <nav className="p-2 space-y-1">
               {classes.map((c) => (
-                <div key={c.id} className={'rounded-lg transition-all duration-200 ' + (activeClassId === c.id ? 'bg-slate-100 dark:bg-slate-900/50' : '')}>
+                <div key={c.id} className={'rounded-lg transition-all duration-200 ' + (activeClassId === c.id ? 'bg-slate-100' : '')}>
                   {/* Class Item */}
                   <div
                     onClick={() => {
@@ -351,7 +395,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <ChevronDownIcon className={'w-5 h-5 me-2 transition-transform ' + (expandedClasses.includes(c.id) ? 'rotate-0' : '-rotate-90')} />
                     {editingClass?.id === c.id ? (
                         <div className="w-full flex items-center gap-1">
-                            <input type="text" value={editingClass.name} onChange={e => setEditingClass({...editingClass, name: e.target.value})} className="w-full p-1 border rounded dark:bg-slate-600 dark:border-slate-500" autoFocus onBlur={handleSaveClassEdit} onKeyDown={e => e.key === 'Enter' && handleSaveClassEdit()}/>
+                            <input type="text" value={editingClass.name} onChange={e => setEditingClass({...editingClass, name: e.target.value})} className="w-full p-1 border rounded" autoFocus onBlur={handleSaveClassEdit} onKeyDown={e => e.key === 'Enter' && handleSaveClassEdit()}/>
                             <button onClick={e => {e.stopPropagation(); handleSaveClassEdit();}} className="p-1 rounded-full hover:bg-green-500/20"><CheckIcon className="w-5 h-5 text-green-600"/></button>
                             <button onClick={e => {e.stopPropagation(); setEditingClass(null)}} className="p-1 rounded-full hover:bg-red-500/20"><XIcon className="w-5 h-5 text-red-600"/></button>
                         </div>
@@ -380,14 +424,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     onClick={() => onSelectSubject(s.id)}
                                     className={'flex items-center p-2 rounded-md transition-all duration-200 group cursor-pointer border-r-4 text-xs sm:text-sm ' + (
                                       isActive
-                                      ? 'bg-slate-200/50 dark:bg-slate-700 font-semibold'
-                                      : 'border-transparent hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                                      ? 'bg-slate-200/50 font-semibold'
+                                      : 'border-transparent hover:bg-slate-200/50'
                                     )}
                                     style={{ borderColor: isActive ? s.themeColor || '#2E8540' : 'transparent' }}
                                 >
                                    {editingSubject?.id === s.id ? (
                                        <div className="w-full flex items-center gap-1">
-                                          <input type="text" value={editingSubject.name} onChange={e => setEditingSubject({...editingSubject, name: e.target.value})} className="w-full p-1 border rounded text-slate-800 dark:bg-slate-600 dark:border-slate-500" autoFocus onBlur={()=>handleSaveSubjectEdit(c.id)} onKeyDown={e => e.key === 'Enter' && handleSaveSubjectEdit(c.id)}/>
+                                          <input type="text" value={editingSubject.name} onChange={e => setEditingSubject({...editingSubject, name: e.target.value})} className="w-full p-1 border rounded text-slate-800" autoFocus onBlur={()=>handleSaveSubjectEdit(c.id)} onKeyDown={e => e.key === 'Enter' && handleSaveSubjectEdit(c.id)}/>
                                           <button onClick={e => {e.stopPropagation(); handleSaveSubjectEdit(c.id);}} className="p-1 rounded-full hover:bg-green-500/20"><CheckIcon className="w-5 h-5 text-green-500"/></button>
                                           <button onClick={e => {e.stopPropagation(); setEditingSubject(null)}} className="p-1 rounded-full hover:bg-red-500/20"><XIcon className="w-5 h-5 text-red-500"/></button>
                                        </div>
@@ -395,7 +439,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                       <React.Fragment>
                                           <BookOpenIcon className={'w-4 h-4 me-2 ' + (isActive ? '' : 'text-slate-500')}/>
                                           <span className="flex-1 min-w-0 w-full break-words whitespace-normal overflow-visible text-right text-xs sm:text-sm" style={{wordBreak: 'break-word'}} title={s.name}>{s.name}</span>
-                                          <div className={'flex items-center ' + (isActive ? 'text-slate-600 dark:text-slate-300' : '')}>
+                                          <div className={'flex items-center ' + (isActive ? 'text-slate-600' : '')}>
                                               <button onClick={(e) => { e.stopPropagation(); setEditingSubject({id: s.id, name: s.name}); }} className="p-1 rounded-full hover:bg-black/20" data-tooltip="تعديل المادة"><EditIcon className="w-6 h-6" /></button>
                                               <button onClick={(e) => { e.stopPropagation(); handleDeleteSubject(c.id, s.id, s.name); }} className="p-1 rounded-full hover:bg-red-100/80 hover:ring-2 hover:ring-red-400" data-tooltip="حذف المادة"><TrashIcon className="w-6 h-6 text-red-600" /></button>
                                           </div>
@@ -406,7 +450,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         })}
                         {addingSubjectToClass === c.id && (
                             <div className="flex items-center gap-1 p-2">
-                                <input type="text" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} placeholder="اسم المادة الجديدة" className="w-full p-2 sm:p-1 text-xs sm:text-sm border rounded dark:bg-slate-600 dark:border-slate-500" autoFocus onKeyDown={e => e.key === 'Enter' && handleAddSubject(c.id)} />
+                                <input type="text" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} placeholder="اسم المادة الجديدة" className="w-full p-2 sm:p-1 text-xs sm:text-sm border rounded" autoFocus onKeyDown={e => e.key === 'Enter' && handleAddSubject(c.id)} />
                                 <button onClick={() => handleAddSubject(c.id)} className="p-1 rounded-full hover:bg-green-500/20"><CheckIcon className="w-5 h-5 text-green-600"/></button>
                                 <button onClick={() => setAddingSubjectToClass(null)} className="p-1 rounded-full hover:bg-red-500/20"><XIcon className="w-5 h-5 text-red-600"/></button>
                             </div>
@@ -418,18 +462,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             </nav>
             {/* باقي السايدبار: الفصول والمواد بالأعلى */}
         </div>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+  <div className="p-4 border-t border-slate-200">
           <form onSubmit={handleAddClass} className="flex flex-col gap-2">
             <input
               type="text"
               value={newClassName}
               onChange={(e) => setNewClassName(e.target.value)}
               placeholder="اسم الفصل الجديد..."
-              className="w-full p-2 border border-slate-300 rounded-lg dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <button
               type="submit"
-              className="w-full flex justify-center items-center gap-2 bg-[#2E8540] text-white p-2 rounded-lg hover:bg-[#246b33] transition-colors disabled:bg-slate-400 dark:disabled:bg-slate-600"
+              className="w-full flex justify-center items-center gap-2 bg-[#2E8540] text-white p-2 rounded-lg hover:bg-[#246b33] transition-colors disabled:bg-slate-400"
               disabled={!newClassName.trim()}
             >
               <PlusIcon className="w-5 h-5" />
@@ -439,16 +483,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
         {/* مكونات السجل وتصميم السجل في الأسفل */}
         {activeClass && activeSubject && (
-          <div className="p-2 border-t border-slate-200 dark:border-slate-700">
+          <div className="p-2 border-t border-slate-200">
             {/* Accordion لمكونات السجل */}
             <AccordionComponent activeClass={activeClass} activeSubject={activeSubject} onAddColumn={onAddColumn} onDeleteColumn={onDeleteColumn} />
-            <div className="mt-2">
-              <ReportTheme 
-                activeSubject={activeSubject}
-                onUpdateThemeColor={onUpdateSubjectThemeColor}
-                classId={activeClass.id}
-              />
-            </div>
+          </div>
+        )}
+        {/* مجموعة تنسيق الألوان المستقلة */}
+        {activeClass && activeSubject && (
+          <div className="p-2 border-t border-slate-200">
+            <ColorThemeGroup 
+              activeSubject={activeSubject}
+              onUpdateThemeColor={onUpdateSubjectThemeColor}
+              classId={activeClass.id}
+            />
           </div>
         )}
       </aside>

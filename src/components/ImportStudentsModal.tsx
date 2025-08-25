@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
+// استيراد دالة التباين من كشف الطلاب
+import { getContrastColor } from './StudentTable';
 import { ColumnType } from '../types';
 import { PlusIcon, TrashIcon } from './Icons';
 
@@ -155,12 +157,12 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                 <div className="flex flex-col items-center mb-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-700"><svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke="#2E8540" strokeWidth="2" strokeLinecap="round"/></svg></span>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">استيراد ملف Excel</h3>
+                    <h3 className="text-lg font-bold text-slate-800">استيراد الأسماء من ملف Excel</h3>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">اختر ملف Excel يحتوي على بيانات الطلاب. الصف الأول يجب أن يكون عناوين الأعمدة.</p>
+                  <p className="text-slate-600 text-sm">اختر ملف Excel يحتوي على أسماء الطلاب. الصف الأول يجب أن يكون عناوين الأعمدة.</p>
                 </div>
-                <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center bg-slate-50 dark:bg-slate-800/40">
-                  <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="block w-full text-sm text-slate-900 border border-slate-300 rounded-lg cursor-pointer bg-slate-50 dark:text-slate-400 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400" />
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center bg-slate-50">
+                  <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="block w-full text-sm text-slate-900 border border-slate-300 rounded-lg cursor-pointer bg-slate-50 focus:outline-none" />
                   {sheetNames.length > 0 && (
                     <div className="mt-4 flex flex-wrap gap-4 items-center justify-center">
                       <span className="text-xs text-slate-500">عدد الأوراق: <b>{sheetNames.length}</b></span>
@@ -182,38 +184,62 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
     case 2: // Filter
       return (
         <div>
-          <p className="mb-4 text-slate-600 dark:text-slate-400">الخطوة 2: (اختياري) قم بفلترة البيانات لاستيراد صفوف محددة فقط.</p>
-          <div className="space-y-2 mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+          <p className="mb-4 text-slate-600">الخطوة 2: (اختياري) قم بفلترة البيانات لاستيراد صفوف محددة فقط.</p>
+          <div className="space-y-2 mb-4 p-3 bg-slate-50 rounded-lg">
             {filters.map(filter => (
               <div key={filter.id} className="flex flex-col md:flex-row items-center gap-2">
-                 <select value={filter.column} onChange={e => updateFilter(filter.id, { column: e.target.value, value: '' })} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-full md:w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
+                 <select value={filter.column} onChange={e => updateFilter(filter.id, { column: e.target.value, value: '' })} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-full md:w-1/3 p-2.5">
                    <option value="">اختر عمود...</option>
                    {fileHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                  </select>
                  <span className="text-slate-500">=</span>
-                 <select value={filter.value} onChange={e => updateFilter(filter.id, { value: e.target.value })} disabled={!filter.column} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-full md:w-1/3 p-2.5 dark:bg-slate-600 dark:border-slate-500">
+                 <select value={filter.value} onChange={e => updateFilter(filter.id, { value: e.target.value })} disabled={!filter.column} className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg block w-full md:w-1/3 p-2.5">
                    <option value="">اختر قيمة...</option>
                    {filter.column && Array.from(uniqueColumnValues[filter.column]).map((val: any) => <option key={val} value={val}>{val}</option>)}
                  </select>
                  <button onClick={() => removeFilter(filter.id)} className="text-red-500 hover:text-red-700 p-2"><TrashIcon className="w-4 h-4"/></button>
               </div>
             ))}
-            <button onClick={addFilter} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
+            <button onClick={addFilter} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800">
               <PlusIcon className="w-4 h-4"/> إضافة فلتر
             </button>
           </div>
           <div className="flex items-center gap-4 mb-2">
-            <p className="text-sm text-slate-600 dark:text-slate-400">معاينة البيانات المفلترة <span className="font-bold">({filteredData.length} سجل)</span></p>
+            <p className="text-sm text-slate-600">معاينة البيانات المفلترة <span className="font-bold">({filteredData.length} سجل)</span></p>
             <span className="text-xs text-slate-500">عدد الأعمدة: <b>{fileHeaders.length}</b></span>
           </div>
-          <div className="overflow-auto max-h-60 border-2 border-emerald-200 dark:border-emerald-700 rounded-lg bg-white dark:bg-slate-800/40 shadow-sm">
+          <div className="overflow-auto max-h-60 border-2 border-emerald-200 rounded-lg bg-white shadow-sm">
             <table className="w-full text-xs text-left">
-              <thead className="sticky top-0 bg-emerald-50 dark:bg-emerald-900/40">
-                <tr>{fileHeaders.map(h => <th key={h} className="p-2 font-semibold text-emerald-900 dark:text-emerald-200">{h}</th>)}</tr>
+              <thead
+                className="text-[10px] sm:text-xs md:text-sm uppercase sticky top-0 z-30"
+                style={{
+                  backgroundColor: '#fff',
+                  borderTopLeftRadius: 12,
+                  borderTopRightRadius: 12,
+                  fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                  boxShadow: '0 2px 8px -2px #0002',
+                }}>
+                <tr>
+                  {fileHeaders.map(h => (
+                    <th
+                      key={h}
+                      className="p-2 font-semibold text-xs text-center"
+                      style={{
+                        fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                        color: getContrastColor('#fff'),
+                        letterSpacing: '1px',
+                        background: 'transparent',
+                        boxShadow: 'none',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
+              <tbody className="divide-y divide-slate-200">
                 {filteredData.slice(0, 10).map((row, i) => (
-                  <tr key={i} className="hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20 transition">
+                  <tr key={i} className="hover:bg-emerald-50/60 transition">
                     {fileHeaders.map(h => <td key={h} className="p-2 truncate max-w-xs">{row[h]}</td>)}
                   </tr>
                 ))}
@@ -225,15 +251,15 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
         case 3: // Map
             return (
               <div>
-                <p className="mb-4 text-slate-600 dark:text-slate-400">الخطوة 3: حدد عمود اسم الطالب، ثم اختر الأعمدة التي ترغب في استيرادها.</p>
+                <p className="mb-4 text-slate-600">الخطوة 3: حدد عمود اسم الطالب، ثم (اختياري) اختر أعمدة إضافية لاستيرادها مع الأسماء.</p>
                 
-                <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-r-4 border-yellow-400">
-                  <label htmlFor="studentNameColumn" className="block mb-2 text-sm font-medium text-slate-900 dark:text-slate-300">1. حدد عمود اسم الطالب (إلزامي)</label>
+                <div className="mb-6 p-4 bg-yellow-50 border-r-4 border-yellow-400">
+                  <label htmlFor="studentNameColumn" className="block mb-2 text-sm font-medium text-slate-900">1. حدد عمود اسم الطالب (إلزامي)</label>
                   <select
                     id="studentNameColumn"
                     value={studentNameColumn}
                     onChange={(e) => setStudentNameColumn(e.target.value)}
-                    className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full md:w-1/2 p-2.5 dark:bg-slate-600 dark:border-slate-500"
+                    className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full md:w-1/2 p-2.5"
                   >
                     <option value="">-- اختر عمود اسم الطالب --</option>
                     {fileHeaders.map(h => <option key={h} value={h}>{h}</option>)}
@@ -241,8 +267,8 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-slate-900 dark:text-slate-300">2. اختر الأعمدة المراد استيرادها كحقول جديدة</label>
-                  <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg max-h-80 overflow-y-auto">
+                  <label className="block mb-2 text-sm font-medium text-slate-900">2. (اختياري) اختر أعمدة إضافية لاستيرادها مع الأسماء</label>
+                  <div className="space-y-2 p-3 bg-slate-50 rounded-lg max-h-80 overflow-y-auto">
                     {fileHeaders.map(header => {
                       const isDisabled = header === studentNameColumn;
                       const config = columnsToImport[header];
@@ -255,7 +281,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                               checked={!isDisabled && config?.selected}
                               onChange={(e) => handleColumnSelectionChange(header, e.target.checked)}
                               disabled={isDisabled}
-                              className="w-5 h-5 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600"
+                              className="w-5 h-5 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 focus:ring-2"
                             />
                             <label htmlFor={'checkbox-' + header} className="ms-3 font-semibold">{header}</label>
                           </div>
@@ -265,7 +291,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                                     <select
                                         value={config.type}
                                         onChange={(e) => handleColumnTypeChange(header, e.target.value as ColumnType)}
-                                        className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-600 dark:border-slate-500"
+                                        className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5"
                                     >
                                         {Object.values(ColumnType).map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
@@ -275,7 +301,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                                           placeholder="خيارات مفصولة بفاصلة"
                                           value={config.options}
                                           onChange={(e) => handleColumnOptionsChange(header, e.target.value)}
-                                          className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-600 dark:border-slate-500"
+                                          className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5"
                                         />
                                     )}
                                 </div>
@@ -294,21 +320,21 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 m-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100 text-center">استيراد الطلاب والدرجات</h2>
+  <div className="bg-white rounded-lg shadow-xl p-8 m-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
+  <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">استيراد الأسماء من ملف الاكسل</h2>
         
-        <div className="flex-1 overflow-y-auto pr-2">
+  <div className="flex-1 overflow-y-auto pr-2">
             {renderStepContent()}
         </div>
 
-        <div className="flex justify-between items-center gap-4 mt-8 pt-4 border-t dark:border-slate-600">
+  <div className="flex justify-between items-center gap-4 mt-8 pt-4 border-t">
           <div>
-            {step > 1 && <button onClick={() => setStep(s => s - 1)} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600 transition-colors">السابق</button>}
+            {step > 1 && <button onClick={() => setStep(s => s - 1)} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 transition-colors">السابق</button>}
           </div>
           <div className="flex gap-4">
-             <button onClick={onClose} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600 transition-colors">إلغاء</button>
+             <button onClick={onClose} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 transition-colors">إلغاء</button>
             {step === 2 && <button onClick={goToMappingStep} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>}
-            {step === 3 && <button onClick={handleImport} disabled={isImportDisabled} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">استيراد البيانات</button>}
+            {step === 3 && <button onClick={handleImport} disabled={isImportDisabled} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">استيراد الأسماء</button>}
           </div>
         </div>
       </div>

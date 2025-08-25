@@ -75,93 +75,93 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 sm:p-10 w-full max-w-3xl m-2 sm:m-6 border border-slate-200 dark:border-slate-700">
-        <h2 className="text-2xl font-bold mb-8 text-slate-800 dark:text-slate-100 text-center">الإعدادات</h2>
+  <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 w-full max-w-3xl m-2 sm:m-6 border border-slate-200">
+  <h2 className="text-2xl font-bold mb-8 text-slate-800 text-center">الإعدادات</h2>
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 pr-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 pr-1">
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <label htmlFor="schoolName" className="sm:w-32 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">اسم المدرسة</label>
+              <label htmlFor="schoolName" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">اسم المدرسة</label>
               <input
                 type="text"
                 id="schoolName"
                 name="schoolName"
                 value={currentSettings.schoolName}
                 onChange={handleChange}
-                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white min-w-0"
+                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 min-w-0"
               />
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <label htmlFor="teacherName" className="sm:w-32 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">اسم المعلم</label>
+              <label htmlFor="teacherName" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">اسم المعلم</label>
               <input
                 type="text"
                 id="teacherName"
                 name="teacherName"
                 value={currentSettings.teacherName}
                 onChange={handleChange}
-                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white min-w-0"
+                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 min-w-0"
               />
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <label htmlFor="principalName" className="sm:w-32 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">اسم مدير المدرسة</label>
+              <label htmlFor="principalName" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">اسم مدير المدرسة</label>
               <input
                 type="text"
                 id="principalName"
                 name="principalName"
                 value={currentSettings.principalName}
                 onChange={handleChange}
-                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white min-w-0"
+                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 min-w-0"
               />
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <label htmlFor="educationDirectorate" className="sm:w-32 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">الإدارة التعليمية</label>
+              <label htmlFor="educationDirectorate" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">الإدارة التعليمية</label>
               <input
                 type="text"
                 id="educationDirectorate"
                 name="educationDirectorate"
                 value={currentSettings.educationDirectorate}
                 onChange={handleChange}
-                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white min-w-0"
+                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 min-w-0"
               />
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <label htmlFor="semester" className="sm:w-32 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">الفصل الدراسي</label>
+              <label htmlFor="semester" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">الفصل الدراسي</label>
               <select
                 id="semester"
                 name="semester"
                 value={currentSettings.semester}
                 onChange={handleChange}
-                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white min-w-0"
+                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 min-w-0"
               >
                 <option value="الفصل الدراسي الأول">الفصل الدراسي الأول</option>
                 <option value="الفصل الدراسي الثاني">الفصل الدراسي الثاني</option>
               </select>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <label htmlFor="academicYear" className="sm:w-32 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">العام الدراسي</label>
+              <label htmlFor="academicYear" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">العام الدراسي</label>
               <input
                 type="text"
                 id="academicYear"
                 name="academicYear"
                 value={currentSettings.academicYear}
                 onChange={handleChange}
-                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white min-w-0"
+                className="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2.5 min-w-0"
               />
             </div>
             {/* تم حذف كل ما يتعلق بالذكاء الاصطناعي بناءً على طلب المستخدم */}
           </div>
           <BackupButtons onExport={handleExport} onImport={handleImport} isLoading={isLoading} />
           {importError && <div className="text-red-600 text-sm mt-2">{importError}</div>}
-          <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
-              className="py-2 px-4 text-sm font-medium text-slate-700 bg-white rounded-lg border border-slate-300 hover:bg-slate-100 focus:z-10 focus:ring-4 focus:ring-slate-200 dark:focus:ring-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:text-white dark:hover:bg-slate-700 transition-colors"
+              className="py-2 px-4 text-sm font-medium text-slate-700 bg-white rounded-lg border border-slate-300 hover:bg-slate-100 focus:z-10 focus:ring-4 focus:ring-slate-200 transition-colors"
             >
               إغلاق
             </button>
             <button
               type="submit"
-              className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800 transition-colors"
+              className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] focus:ring-4 focus:ring-green-300 transition-colors"
               disabled={isLoading}
             >
               حفظ التغييرات
@@ -170,12 +170,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
           {/* نافذة تأكيد الاستيراد */}
           {showConfirm && (
             <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 max-w-xs w-full">
-                <div className="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100">تأكيد الاستيراد</div>
-                <div className="mb-4 text-slate-700 dark:text-slate-200 text-sm">سيتم حذف جميع البيانات الحالية واستبدالها بالنسخة الاحتياطية. هل أنت متأكد؟</div>
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-xs w-full">
+                <div className="text-lg font-bold mb-4 text-slate-800">تأكيد الاستيراد</div>
+                <div className="mb-4 text-slate-700 text-sm">سيتم حذف جميع البيانات الحالية واستبدالها بالنسخة الاحتياطية. هل أنت متأكد؟</div>
                 <div className="flex gap-4 justify-end">
                   <button
-                    className="py-2 px-4 text-sm font-medium text-slate-700 bg-white rounded-lg border border-slate-300 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:text-white dark:hover:bg-slate-700 transition-colors"
+                    className="py-2 px-4 text-sm font-medium text-slate-700 bg-white rounded-lg border border-slate-300 hover:bg-slate-100 transition-colors"
                     onClick={() => setShowConfirm(false)}
                   >إغلاق</button>
                   <button

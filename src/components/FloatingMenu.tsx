@@ -32,7 +32,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
       </button>
       {/* قائمة الأدوات */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-3 bg-white dark:bg-slate-800 rounded-xl shadow-xl p-4 border border-slate-200 dark:border-slate-700 min-w-[180px] animate-fade-in">
+  <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-3 bg-white rounded-xl shadow-xl p-4 border border-slate-200 min-w-[180px] animate-fade-in">
           <button onClick={onAddStudent} className="flex items-center gap-2 p-2 rounded hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-700 dark:text-emerald-300 font-semibold text-sm transition-all">
             <UserPlusIcon className="w-5 h-5" /> إضافة طالب
           </button>

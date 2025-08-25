@@ -354,22 +354,20 @@ const App: React.FC = () => {
           onColorChange={(color, subjectId) => {
             const sid = subjectId || activeSubjectId;
             if (!activeClassId || !sid) return;
-            // تحديث لون مادة واحدة فقط بدون تكرار أو تغيير بقية المواد
             setClasses(prev => prev.map(c => c.id === activeClassId ? {
               ...c,
               subjects: c.subjects.map(s => {
                 if (s.id === sid) {
-                  // إذا كان اللون نفسه، لا تغير شيء
                   if (s.themeColor === color) return s;
-                  // عدل فقط المادة المطلوبة
                   return { ...s, themeColor: color };
                 }
-                // لا تغير بقية المواد
                 return s;
               })
             } : c));
           }}
           classes={classes}
+          activeClassId={activeClassId}
+          activeSubjectId={activeSubjectId}
           onEditClass={(cls) => {
             if (cls.name && cls.name.trim()) {
               setClasses(prev => prev.map(c => c.id === cls.id ? { ...c, name: cls.name.trim(), type: cls.type } : c));
