@@ -1,0 +1,397 @@
+import React, { useState, useEffect } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { getContrastColor, getHeaderBg } from '../utils/colorUtils';
+import EditColumnModal from './EditColumnModal';
+import { EllipsisIcon } from './Icons';
+import { DraggableColumns, saveColumnOrder, getOrderedColumns } from './DraggableColumnSimple';
+
+// نوع البيانات
+interface ColumnType {
+  id: string | number;
+  name: string;
+  type?: string;
+  options?: string[];
+}
+
+interface StudentType {
+  id: string | number;
+  name: string;
+  records?: Record<string, any>;
+  serial?: number;
+}
+
+interface StudentTableSimpleProps {
+  columns: ColumnType[];
+  students: StudentType[];
+  onEditColumn: (id: string | number, updatedData: any) => void;
+  onDeleteColumn: (id: string | number, name: string) => void;
+  onFillColumn?: (id: string | number, value: any) => void;
+  onUpdateStudentData?: (studentId: string | number, colId: string | number, value: any) => void;
+  onDeleteStudent?: (studentId: string | number, name: string) => void;
+  onDeleteAllStudents?: () => void;
+  themeColor?: string;
+  nameSortOrder?: 'asc' | 'desc';
+  onNameSortChange?: (order: 'asc' | 'desc') => void;
+  onColumnOrderChange?: (columns: ColumnType[]) => void;
+}
+
+// المكون الرئيسي
+const StudentTableSimple = (props: StudentTableSimpleProps) => {
+  const { 
+    columns, 
+    students, 
+    onEditColumn, 
+    onDeleteColumn, 
+    onFillColumn, 
+    onUpdateStudentData, 
+    onDeleteStudent,
+    onDeleteAllStudents,
+    themeColor,
+    nameSortOrder = 'asc',
+    onNameSortChange,
+    onColumnOrderChange
+  } = props;
+  
+  // حالة تحرير العمود
+  const [editingColumn, setEditingColumn] = useState<ColumnType | null>(null);
+  
+  // استرجاع ترتيب الأعمدة المحفوظ
+  const savedColumnOrder = React.useMemo(() => {
+    try {
+      const saved = localStorage.getItem('columnOrder');
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.error('Error loading column order:', error);
+      return null;
+    }
+  }, []);
+
+  // حالة الأعمدة المرتبة
+  const [orderedColumns, setOrderedColumns] = useState<ColumnType[]>(() => {
+    // استخدام الدالة المساعدة للحصول على الأعمدة مرتبة
+    return getOrderedColumns(columns, savedColumnOrder);
+  });
+
+  // تحديث ترتيب الأعمدة عند تغيير الأعمدة الأصلية
+  useEffect(() => {
+    setOrderedColumns(getOrderedColumns(columns, savedColumnOrder));
+  }, [columns, savedColumnOrder]);
+
+  // معالجة تغيير ترتيب الأعمدة
+  const handleColumnOrderChange = (newColumns: ColumnType[]) => {
+    setOrderedColumns(newColumns);
+    
+    if (onColumnOrderChange) {
+      onColumnOrderChange(newColumns);
+    }
+  };
+
+  // حالة الصفوف المميزة
+  const [highlightedRows, setHighlightedRows] = useState<(string | number)[]>(() => {
+    try {
+      const saved = localStorage.getItem('highlightedRows');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // حفظ الصفوف المميزة في التخزين المحلي
+  useEffect(() => {
+    localStorage.setItem('highlightedRows', JSON.stringify(highlightedRows));
+  }, [highlightedRows]);
+  
+  // فرز الطلاب حسب الاسم
+  const sortedStudents = [...students].sort((a, b) => {
+    if (nameSortOrder === 'asc') {
+      return (a.name || '').localeCompare(b.name || '', 'ar');
+    } else {
+      return (b.name || '').localeCompare(a.name || '', 'ar');
+    }
+  });
+
+  // حالة قائمة الإجراءات
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  
+  // إغلاق القائمة عند النقر خارجها
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsActionsMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
+  
+  // تبديل حالة تمييز الصف
+  const toggleHighlight = (studentId: string | number) => {
+    setHighlightedRows(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId) 
+        : [...prev, studentId]
+    );
+  };
+
+  return (
+    <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
+      <div className="w-full flex justify-end mb-2 px-4">
+        <div className="relative" ref={menuRef}>
+          <button
+            className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-md text-xs font-semibold text-white transition-colors"
+            onClick={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
+          >
+            <span>الإجراءات</span>
+            <EllipsisIcon className="w-4 h-4" />
+          </button>
+          
+          {isActionsMenuOpen && (
+            <div className="absolute left-0 z-50 mt-1 bg-white shadow-lg rounded-md py-1 min-w-[160px] border border-slate-200">
+              {onDeleteAllStudents && (
+                <button
+                  className="w-full text-right px-4 py-2 text-xs text-red-600 hover:bg-slate-100 transition-colors"
+                  onClick={() => {
+                    setIsActionsMenuOpen(false);
+                    onDeleteAllStudents();
+                  }}
+                >
+                  حذف جميع الأسماء
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div
+        className="w-full bg-white shadow border-2 border-slate-300 overflow-x-auto custom-scroll"
+        style={{ direction: 'rtl', minHeight: '60vh', boxSizing: 'border-box', maxWidth: '100vw', margin: 0, padding: 0, border: 'none', borderRadius: 0 }}
+      >
+        <DndProvider backend={HTML5Backend}>
+          <table
+            className="min-w-full table-auto"
+            style={{ width: '100%', tableLayout: 'auto', minWidth: 600 }}
+          >
+            <thead className="text-[10px] sm:text-xs md:text-sm uppercase sticky top-0 z-30"
+              style={{
+                backgroundColor: themeColor || '#2E8540',
+                borderTopLeftRadius: 12,
+                borderTopRightRadius: 12,
+                fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                boxShadow: '0 2px 8px -2px #0002',
+                color: getContrastColor(themeColor || '#2E8540'),
+              }}>
+              <tr>
+                <th className="px-1 sm:px-2 py-2 sticky right-0 min-w-[60px] max-w-[60px] text-center z-30 text-xs font-bold border-r-4 border-slate-300 shadow-lg serial-header"
+                    style={{
+                      fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                      boxShadow: '2px 0 8px -2px #0002',
+                      color: getContrastColor('#22c55e'),
+                      background: 'rgba(34,197,94,0.85)', // أخضر مع شفافية أقل
+                      letterSpacing: '1px',
+                      borderTopRightRadius: 10
+                    }}>م</th>
+                <th className="px-1 sm:px-2 py-2 sticky right-0 min-w-[200px] max-w-[320px] text-center z-30 text-xs font-bold border-r-4 border-slate-300 shadow-lg name-header"
+                    style={{
+                      fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                      boxShadow: '2px 0 8px -2px #0002',
+                      color: getContrastColor('#0ea5e9'),
+                      background: 'rgba(14,165,233,0.85)', // أزرق مع شفافية أقل
+                      letterSpacing: '1px',
+                    }}>
+                    <div className="flex items-center justify-center gap-2">
+                      <span>الاسم</span>
+                      {onNameSortChange && (
+                        <button
+                          className="bg-white bg-opacity-25 rounded px-1.5 py-0.5 text-[10px] hover:bg-opacity-40 transition-all"
+                          onClick={() => onNameSortChange(nameSortOrder === 'asc' ? 'desc' : 'asc')}
+                          title={nameSortOrder === 'asc' ? 'ترتيب تنازلي' : 'ترتيب تصاعدي'}
+                        >
+                          {nameSortOrder === 'asc' ? 'أ→ي' : 'ي→أ'}
+                        </button>
+                      )}
+                    </div>
+                  </th>
+                  
+                {/* استخدام مكون السحب والإفلات */}
+                <DraggableColumns
+                  columns={orderedColumns}
+                  themeColor={themeColor}
+                  onEditColumn={(id) => {
+                    const column = columns.find(c => c.id === id);
+                    if (column) setEditingColumn(column);
+                  }}
+                  onDeleteColumn={onDeleteColumn}
+                  onFillColumn={onFillColumn}
+                  onColumnsReorder={handleColumnOrderChange}
+                />
+                <th className="px-2 py-2 text-center text-xs" title="إجراءات">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={orderedColumns.length + 3} className="text-center py-6 text-slate-400">لا يوجد طلاب</td>
+                </tr>
+              ) : (
+                sortedStudents.map((student, idx) => {
+                  const isHighlighted = highlightedRows.includes(student.id);
+                  return (
+                    <tr
+                      key={student.id}
+                      className={
+                        "border-b last:border-b-0 transition-colors " +
+                        (isHighlighted ? "bg-yellow-100" : (idx % 2 === 0 ? "bg-gray-50" : "bg-white"))
+                      }
+                    >
+                      <td
+                        className="px-1 sm:px-2 py-2 text-center font-semibold text-slate-700 whitespace-nowrap border-b-4 border-slate-300 z-20 cursor-pointer"
+                        style={{
+                          maxWidth: '60px',
+                          minWidth: '60px',
+                          boxShadow: '2px 0 8px -2px #0002',
+                          backgroundColor: getHeaderBg(themeColor)
+                        }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleHighlight(student.id);
+                        }}
+                      >
+                        {student.serial || idx + 1}
+                      </td>
+                      <td
+                        className="px-1 sm:px-2 py-2 sticky right-0 text-right font-semibold text-slate-700 whitespace-nowrap border-b-4 border-slate-300 z-20 text-sm md:text-xs"
+                        style={{
+                          maxWidth: '220px',
+                          minWidth: '140px',
+                          boxShadow: '2px 0 8px -2px #0002',
+                          backgroundColor: getHeaderBg(themeColor)
+                        }}
+                      >
+                        {student.name}
+                      </td>
+                      {orderedColumns.map((col) => {
+                        const value = student.records?.[col.id];
+                        const cellKey = `${student.id}_${col.id}`;
+                        
+                        if (col.type === 'مربع اختيار' || col.type === 'CHECKBOX') {
+                          return (
+                            <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-3 text-center bg-white border-b border-slate-200 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!!value}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.checked)}
+                              />
+                            </td>
+                          );
+                        } else if (col.type === 'قائمة' || col.type === 'LIST') {
+                          return (
+                            <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                              <select
+                                value={value || ''}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                                className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700"
+                              >
+                                <option value="">—</option>
+                                {(col.options || []).map((opt: string) => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            </td>
+                          );
+                        } else if (col.type === 'رقم' || col.type === 'NUMBER') {
+                          return (
+                            <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                              <input
+                                type="number"
+                                value={value !== undefined && value !== null ? value : ''}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value === '' ? null : parseFloat(e.target.value))}
+                                className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                              />
+                            </td>
+                          );
+                        } else if (col.type === 'تاريخ' || col.type === 'DATE') {
+                          return (
+                            <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                              <input
+                                type="date"
+                                value={value || ''}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
+                                className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                              />
+                            </td>
+                          );
+                        } else {
+                          return (
+                            <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                              <input
+                                type="text"
+                                value={value !== undefined && value !== null ? value : ''}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                                className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                              />
+                            </td>
+                          );
+                        }
+                      })}
+                      <td className="px-2 py-3 text-center text-base bg-slate-50 border-b border-slate-200">
+                        <button
+                          className="text-red-500 hover:underline text-xs"
+                          title={`حذف الطالب: ${student.name}`}
+                          aria-label={`حذف الطالب: ${student.name}`}
+                          onClick={e => {
+                            e.stopPropagation();
+                            onDeleteStudent && onDeleteStudent(student.id, student.name);
+                          }}
+                        >
+                          حذف
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </DndProvider>
+      </div>
+      
+      {/* مودال تعديل العمود */}
+      {editingColumn && (
+        <EditColumnModal
+          column={editingColumn as any}
+          onClose={() => setEditingColumn(null)}
+          onSave={(updatedData) => {
+            onEditColumn(editingColumn!.id, updatedData);
+            setEditingColumn(null);
+          }}
+        />
+      )}
+      
+      <style>{`
+        .custom-scroll::-webkit-scrollbar {
+          height: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default StudentTableSimple;

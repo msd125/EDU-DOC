@@ -134,17 +134,38 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
   const [selectedColor, setSelectedColor] = useState<string | null>(null); // Currently selected color
 
   return (
-  <div className={`fixed top-0 left-0 w-full h-full bg-black/30 z-[100] ${open ? '' : 'hidden'}`}
+  <div 
+      className={`fixed top-0 left-0 w-full h-full bg-black/30 z-[100] transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
       style={{ direction: 'rtl' }}
     >
-  <div className="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-2xl z-[110] p-6 overflow-y-auto flex flex-col rounded-s-2xl border-l border-slate-200"
+  <div 
+        className={`fixed top-0 right-0 w-full max-w-md h-full bg-white dark:bg-slate-800 shadow-2xl z-[110] pt-6 px-6 pb-6 overflow-y-auto flex flex-col rounded-s-2xl border-l border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
         onClick={e => e.stopPropagation()}
       >
+        {/* هيدر مع عنوان وزر الإغلاق */}
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white dark:bg-slate-800 pt-1 pb-3 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">إعدادات التخصيص</h2>
+          <button 
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors"
+            aria-label="إغلاق"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
   {/* تم حذف فلاتر الفصل والمادة من السايد بار بناءً على طلب المستخدم */}
         {/* قسم إدارة الفصول والمواد */}
         <div className="mb-6">
-          <h3 className="text-lg font-bold mb-3 text-slate-800 tracking-tight">إدارة الفصول والمواد</h3>
+          <h3 className="text-lg font-bold mb-3 text-slate-800 dark:text-slate-100 tracking-tight flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1.5 text-slate-600 dark:text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+            </svg>
+            إدارة الفصول والمواد
+          </h3>
           {/* إضافة فصل جديد */}
           <form className="flex flex-col gap-2 mb-4" onSubmit={e => { e.preventDefault(); if (newClassName.trim()) { onAddClass(newClassName.trim(), newClassType); setNewClassName(''); setNewClassType('تعليمي'); } }}>
             <div className="flex gap-2">
@@ -165,7 +186,8 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
             <div className="space-y-2">
             {Array.isArray(classes) && classes.length === 0 && (
               <div className="text-center text-slate-400 text-sm">لا توجد فصول بعد.</div>
-            )}
+            )
+            }
             {Array.isArray(classes) && classes.map((cls: Class, idx: number) => {
               const classColor = groupColors[idx % groupColors.length];
               const isCollapsed = collapsedClasses[cls.id];
@@ -271,13 +293,23 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
 
         {/* مكونات السجل بعد الفصول والمواد */}
         <div className="mb-6">
-          <h3 className="text-lg font-bold mb-3 text-slate-800 tracking-tight">مكونات السجل</h3>
+          <h3 className="text-lg font-bold mb-3 text-slate-800 dark:text-slate-100 tracking-tight flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1.5 text-slate-600 dark:text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+            </svg>
+            مكونات السجل
+          </h3>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setExpanded(v => !v)}
-              className="w-full py-2 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-emerald-100 border border-slate-200 text-right transition-all flex items-center justify-between font-semibold shadow-sm"
+              className="w-full py-3 px-4 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 border border-slate-200 dark:border-slate-600 text-right transition-all flex items-center justify-between font-semibold shadow-sm"
             >
-              <span>+ إضافة أعمدة</span>
+              <span className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                إضافة أعمدة سريعة
+              </span>
               <span className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
             </button>
             {expanded && (
@@ -352,12 +384,23 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
 
         {/* مجموعة تنسيق الألوان المستقلة (تفاعلية) */}
         <div className="mb-6">
+          <h3 className="text-lg font-bold mb-3 text-slate-800 dark:text-slate-100 tracking-tight flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1.5 text-slate-600 dark:text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
+            </svg>
+            ألوان المادة
+          </h3>
           <button
-            className="w-full py-2 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-emerald-100 border border-slate-200 text-right transition-all flex items-center justify-between font-semibold shadow-sm"
+            className="w-full py-3 px-4 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 border border-slate-200 dark:border-slate-600 text-right transition-all flex items-center justify-between font-semibold shadow-sm"
             onClick={() => setShowColorGroup(v => !v)}
             type="button"
           >
-            <span>🎨 تنسيق الألوان</span>
+            <span className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
+              </svg>
+              اختيار لون المادة
+            </span>
             <span className={`transition-transform ${showColorGroup ? 'rotate-90' : ''}`}>▶</span>
           </button>
           {showColorGroup && (

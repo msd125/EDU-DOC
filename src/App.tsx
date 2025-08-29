@@ -1,6 +1,7 @@
 import { Toaster, toast } from 'react-hot-toast';
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Class, ColumnType, Column, Student } from './types';
+import { Settings, Class, ColumnType, Column, Student, Template } from './types';
+import StudentTableSimple from './components/StudentTableSimple';
 import StudentDataView from './components/StudentDataView';
 import CustomizeDrawer from './components/CustomizeDrawer';
 import Header from './components/Header';
@@ -12,7 +13,12 @@ import ImportStudentsModal from './components/ImportStudentsModal';
 import SettingsModal from './components/SettingsModal';
 import ConfirmModal from './components/ConfirmModal';
 import ApiKeyModal from './components/ApiKeyModal';
+import SaveTemplateModal from './components/SaveTemplateModal';
+import UseTemplateModal from './components/UseTemplateModal';
+import ExportTemplateModal from './components/ExportTemplateModal';
+import ImportTemplateModal from './components/ImportTemplateModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import WhatsNewModal from './components/WhatsNewModal';
 import Login from './components/Login';
 
 const App: React.FC = () => {
@@ -47,6 +53,12 @@ const App: React.FC = () => {
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [showUseTemplateModal, setShowUseTemplateModal] = useState(false);
+  const [showExportTemplateModal, setShowExportTemplateModal] = useState(false);
+  const [showImportTemplateModal, setShowImportTemplateModal] = useState(false);
+  const [templateToExport, setTemplateToExport] = useState<Template | null>(null);
+  const [templates, setTemplates] = useLocalStorage<Template[]>('column-templates-' + currentUser, []);
   const availableColors = [
     '#10b981', '#2563eb', '#f59e42', '#e11d48', '#64748b', '#fbbf24', '#a21caf', '#f472b6',
     '#f87171', '#facc15', '#4ade80', '#22d3ee', '#818cf8', '#c026d3', '#0ea5e9', '#f43f5e',
@@ -77,6 +89,8 @@ const App: React.FC = () => {
     return classes.length > 0 ? classes[0].id : '';
   });
   const [activeSubjectId, setActiveSubjectId] = useState<string>('');
+  
+  // تم دمج وظائف التصدير في قسم --- Handlers --- لاحقًا
   // عند تغيير الفصول أو حذف فصل، تأكد أن activeClassId صالح
   useEffect(() => {
     if (classes.length > 0 && !classes.find(c => c.id === activeClassId)) {
@@ -99,6 +113,9 @@ const App: React.FC = () => {
     } else {
       setActiveSubjectId('');
     }
+  
+  // Funciones para manejar las plantillas
+
   }, [activeClass]);
   const activeSubject = activeClass && activeClass.subjects.length > 0 ? activeClass.subjects.find(s => s.id === activeSubjectId) || activeClass.subjects[0] : null;
   const studentDataViewRef = useRef<any>(null);
@@ -125,15 +142,15 @@ const App: React.FC = () => {
     } : c));
     toast.success('تمت إضافة الطالب بنجاح.');
   };
-  const deleteStudent = (classId: string, studentId: string) => {
+  const deleteStudent = (classId: string, studentId: string, studentName: string = '') => {
     setConfirmation({
-      message: 'هل أنت متأكد من حذف الطالب؟',
+      message: `هل أنت متأكد من حذف ${studentName || 'هذا الشخص'}؟`,
       onConfirm: () => {
         setClasses((prev: Class[]) => prev.map((c: Class) => c.id === classId ? {
           ...c,
           students: c.students.filter((s: Student) => s.id !== studentId)
         } : c));
-        toast.success('تم حذف الطالب بنجاح.');
+        toast.success(`تم حذف ${studentName || 'الشخص'} بنجاح.`);
         setConfirmation(null);
       }
     });
@@ -259,6 +276,153 @@ const App: React.FC = () => {
     }
     setIsApiKeyModalOpen(false);
   };
+  
+  // Funciones para manejar plantillas
+  const handleSaveTemplate = (templateName: string, description: string, isPublic: boolean) => {
+    if (!activeClass || !activeSubjectId) {
+      toast.error('يرجى تحديد فصل ومادة أولاً');
+      return;
+    }
+    
+    const subject = activeClass.subjects.find(s => s.id === activeSubjectId);
+    if (!subject || !subject.columns.length) {
+      toast.error('لا توجد أعمدة لحفظها كقالب');
+      return;
+    }
+    
+    const newTemplate: Template = {
+      id: `template-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      name: templateName,
+      description: description,
+      columns: [...subject.columns],
+      isPublic: isPublic,
+      isOwner: true,
+      ownerName: settings.teacherName || 'معلم',
+      columnCount: subject.columns.length,
+      createdAt: Date.now(),
+    };
+    
+    setTemplates(prev => [newTemplate, ...prev]);
+    toast.success('تم حفظ القالب بنجاح');
+    setShowSaveTemplateModal(false);
+  };
+  
+  const handleUseTemplate = (templateId: string) => {
+    if (!activeClass || !activeSubjectId) {
+      toast.error('يرجى تحديد فصل ومادة أولاً');
+      return;
+    }
+    
+    const template = templates.find(t => t.id === templateId);
+    if (!template) {
+      toast.error('لم يتم العثور على القالب');
+      return;
+    }
+    
+    const subject = activeClass.subjects.find(s => s.id === activeSubjectId);
+    if (subject && subject.columns.length > 0) {
+      setConfirmation({
+        message: 'سيتم استبدال الأعمدة الحالية بأعمدة القالب. هل تريد المتابعة؟',
+        onConfirm: () => {
+          applyTemplateToSubject(template);
+          setConfirmation(null);
+        },
+        confirmLabel: 'متابعة'
+      });
+    } else {
+      applyTemplateToSubject(template);
+    }
+    
+    setShowUseTemplateModal(false);
+  };
+  
+  // وظائف استيراد وتصدير القوالب وإدارة القوالب
+  const handleExportTemplate = (template: Template) => {
+    setTemplateToExport(template);
+    setShowExportTemplateModal(true);
+  };
+  
+  // وظيفة تعديل اسم القالب
+  const handleRenameTemplate = (templateId: string, newName: string) => {
+    if (!newName.trim()) {
+      toast.error('لا يمكن أن يكون اسم القالب فارغًا');
+      return;
+    }
+    
+    setTemplates(prevTemplates => 
+      prevTemplates.map(template => 
+        template.id === templateId 
+          ? { ...template, name: newName.trim() } 
+          : template
+      )
+    );
+    toast.success('تم تعديل اسم القالب بنجاح');
+  };
+  
+  // وظيفة حذف القالب
+  const handleDeleteTemplate = (templateId: string) => {
+    setTemplates(prevTemplates => 
+      prevTemplates.filter(template => template.id !== templateId)
+    );
+    toast.success('تم حذف القالب بنجاح');
+  };
+  
+  const handleImportTemplate = (template: Template) => {
+    try {
+      // حساب عدد القوالب المستوردة حالياً
+      const importedCount = templates.filter(t => t.isImported).length;
+      const MAX_IMPORTED_TEMPLATES = 10;
+      
+      if (importedCount >= MAX_IMPORTED_TEMPLATES) {
+        toast.error(`لا يمكن استيراد أكثر من ${MAX_IMPORTED_TEMPLATES} قوالب. يرجى حذف بعض القوالب المستوردة أولاً.`);
+        return;
+      }
+      
+      // التحقق من وجود قالب بنفس الاسم
+      const duplicateName = templates.some(t => t.name === template.name);
+      if (duplicateName) {
+        // إضافة لاحقة للتمييز
+        template.name = `${template.name} (مستورد)`;
+      }
+      
+      // التأكد من وجود الحقول الإلزامية
+      if (!template.columns || !Array.isArray(template.columns) || template.columns.length === 0) {
+        throw new Error('القالب المستورد لا يحتوي على أعمدة صالحة');
+      }
+      
+      setTemplates(prev => [template, ...prev]);
+      toast.success('تم استيراد القالب بنجاح!');
+      setShowImportTemplateModal(false);
+    } catch (error) {
+      console.error('خطأ في استيراد القالب:', error);
+      toast.error('حدث خطأ أثناء استيراد القالب. تأكد من صحة البيانات المستوردة.');
+    }
+  };
+  
+  const applyTemplateToSubject = (template: Template) => {
+    setClasses(prev =>
+      prev.map(c => {
+        if (c.id === activeClassId) {
+          return {
+            ...c,
+            subjects: c.subjects.map(s =>
+              s.id === activeSubjectId
+                ? {
+                    ...s,
+                    columns: template.columns.map(col => ({
+                      ...col,
+                      id: `col-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+                    })),
+                  }
+                : s
+            ),
+          };
+        }
+        return c;
+      })
+    );
+    toast.success('تم تطبيق القالب بنجاح');
+  };
 
   if (!currentUser) {
     return <Login onLogin={setCurrentUser} />;
@@ -326,15 +490,16 @@ const App: React.FC = () => {
             settings={settings}
             apiKey={apiKey}
             onRequestApiKey={() => setIsApiKeyModalOpen(true)}
-            activeSubjectId={activeSubjectId}
-            onClassChange={setActiveClassId}
-            onSubjectChange={setActiveSubjectId}
             onAddClass={() => setShowAddClassModal(true)}
             onAddSubject={() => setShowAddSubjectModal(true)}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             onOpenCustomize={() => setIsCustomizeOpen(true)}
+            onSaveTemplate={() => setShowSaveTemplateModal(true)}
+            onUseTemplate={() => setShowUseTemplateModal(true)}
+            onAdminExport={() => studentDataViewRef.current && studentDataViewRef.current.openAdminModal && studentDataViewRef.current.openAdminModal()}
+            setClasses={setClasses} // إضافة دالة تحديث الصفوف
           />
         </div>
         {/* إدارة الفصول والمواد (سايد بار جانبي) */}
@@ -444,7 +609,7 @@ const App: React.FC = () => {
           onAddClass={(name) => {
             setClasses(prev => ([
               ...prev,
-              { id: Date.now().toString() + '-' + Math.random(), name, subjects: [], students: [] }
+              { id: Date.now().toString() + '-' + Math.random(), name, type: 'تعليمي', subjects: [], students: [] }
             ]));
             toast.success('تمت إضافة الفصل بنجاح.');
           }}
@@ -509,6 +674,45 @@ const App: React.FC = () => {
           onClose={() => setIsApiKeyModalOpen(false)}
         />
       )}
+
+      {showSaveTemplateModal && activeClass && activeSubject && (
+        <SaveTemplateModal
+          onClose={() => setShowSaveTemplateModal(false)}
+          onSave={(templateName, description, isPublic) => handleSaveTemplate(templateName, description, isPublic)}
+          columns={activeSubject.columns}
+        />
+      )}
+
+      {showUseTemplateModal && activeClass && activeSubject && (
+        <UseTemplateModal
+          onClose={() => setShowUseTemplateModal(false)}
+          onUseTemplate={(templateId) => handleUseTemplate(templateId)}
+          templates={templates}
+          onExportTemplate={handleExportTemplate}
+          onShowImport={() => setShowImportTemplateModal(true)}
+          onRenameTemplate={handleRenameTemplate}
+          onDeleteTemplate={handleDeleteTemplate}
+        />
+      )}
+      
+      {showExportTemplateModal && templateToExport && (
+        <ExportTemplateModal
+          onClose={() => setShowExportTemplateModal(false)}
+          template={templateToExport}
+        />
+      )}
+      
+      {showImportTemplateModal && (
+        <ImportTemplateModal
+          onClose={() => setShowImportTemplateModal(false)}
+          onImport={handleImportTemplate}
+          currentImportCount={templates.filter(t => t.isImported).length}
+          maxImportCount={10}
+        />
+      )}
+
+      {/* نافذة ما الجديد */}
+      <WhatsNewModal />
     </div>
   );
 }

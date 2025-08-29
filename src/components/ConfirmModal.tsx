@@ -24,12 +24,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ message, onConfirm, onCance
           <button
             type="button"
             onClick={onConfirm}
-            className={
-              `py-2 px-4 text-sm font-medium text-white rounded-lg transition-colors ` +
-              ((confirmLabel && confirmLabel.includes('حذف'))
-                ? 'bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800'
-                : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-800')
-            }
+            className="py-2 px-4 text-sm font-medium text-white rounded-lg transition-colors bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300"
           >
             {confirmLabel || 'تأكيد الحذف'}
           </button>

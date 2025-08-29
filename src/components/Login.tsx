@@ -5,6 +5,7 @@ interface LoginProps {
   onLogin: (username: string) => void;
 }
 
+
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [mobileNumber, setMobileNumber] = useState('0501234567');
   const [password, setPassword] = useState('123456');
@@ -12,6 +13,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [showRegister, setShowRegister] = useState(false);
   const [registerData, setRegisterData] = useState({ name: '', phone: '', password: '', confirm: '' });
   const [registerError, setRegisterError] = useState('');
+
 
   // استرجاع المستخدمين من localStorage
   const getUsers = () => {
@@ -25,6 +27,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const saveUsers = (users: any[]) => {
     localStorage.setItem('users', JSON.stringify(users));
   };
+
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -72,17 +75,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <>
-  <div className="flex flex-col min-h-screen bg-slate-100 relative justify-between overflow-x-hidden">
-      {/* خلفية متدرجة شفافة */}
-  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-  <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-slate-100"></div>
-      </div>
+  <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-100 via-slate-100 to-emerald-200 relative justify-between overflow-x-hidden">
+    {/* خلفية زجاجية مع تدرجات وألوان أكثر حيوية */}
+    <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/60 via-white/60 to-emerald-100/70 blur-xl"></div>
+      <div className="absolute -top-32 -end-32 w-96 h-96 bg-emerald-300/30 rounded-full blur-3xl"></div>
+      <div className="absolute -bottom-32 -start-32 w-96 h-96 bg-emerald-400/20 rounded-full blur-2xl"></div>
+    </div>
 
-
-      {/* محتوى الصفحة */}
-      <main className="flex flex-1 items-center justify-center z-10 w-full">
+    {/* محتوى الصفحة */}
+    <main className="flex flex-1 items-center justify-center z-10 w-full px-2 py-8">
         {showRegister ? (
-          <div className="w-full max-w-sm p-8 space-y-6 bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl relative mx-auto">
+          <div className="w-full max-w-sm p-8 space-y-6 bg-white/60 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 ring-1 ring-emerald-200/40 relative mx-auto animate-scale-in" style={{boxShadow:'0 8px 32px 0 rgba(34,197,94,0.10), 0 1.5px 8px 0 rgba(16,185,129,0.10)'}}>
             <div className="text-center mb-2">
               <h2 className="text-2xl font-bold text-slate-900">تسجيل مستخدم جديد</h2>
             </div>
@@ -111,10 +115,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </form>
           </div>
         ) : (
-          <div className="w-full max-w-sm p-8 space-y-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-2xl relative mx-auto">
+          <div className="w-full max-w-sm p-8 space-y-6 bg-white/50 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 ring-1 ring-emerald-200/40 relative mx-auto animate-scale-in" style={{boxShadow:'0 8px 32px 0 rgba(34,197,94,0.10), 0 1.5px 8px 0 rgba(16,185,129,0.10)'}}>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-slate-900">سجلات المعلم</h1>
-              <p className="text-slate-600 mt-2">مرحباً بك، الرجاء تسجيل الدخول</p>
+              <h1 className="text-4xl font-extrabold text-emerald-700 drop-shadow-sm mb-1">سجلات المعلم</h1>
+              <p className="text-emerald-900/80 mt-2 font-medium">مرحباً بك، الرجاء تسجيل الدخول</p>
             </div>
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
@@ -153,21 +157,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               {error && <p className="text-sm text-red-500 text-center">{error}</p>}
               <button
                 type="submit"
-                className="w-full px-4 py-3 text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] focus:ring-4 focus:outline-none focus:ring-green-300 font-medium transition-all duration-300"
+                className="w-full px-4 py-3 text-white bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-400 shadow-lg rounded-xl hover:from-emerald-600 hover:to-emerald-500 focus:ring-4 focus:outline-none focus:ring-emerald-200 font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur"
               >
                 دخول
               </button>
               <button
                 type="button"
-                className="w-full px-4 py-3 mt-2 text-[#2E8540] bg-slate-200 rounded-lg hover:bg-slate-300 focus:ring-4 focus:outline-none focus:ring-green-100 font-medium transition-all duration-300"
+                className="w-full px-4 py-3 mt-2 text-emerald-700 bg-white/70 border border-emerald-100 rounded-xl hover:bg-emerald-50 focus:ring-4 focus:outline-none focus:ring-emerald-100 font-semibold transition-all duration-300"
                 onClick={() => setShowRegister(true)}
               >
                 مستخدم جديد
               </button>
               {/* نص الإهداء تحت زر مستخدم جديد */}
-              <div className="w-full text-center pt-4 text-sm text-green-700">
-                هذه الأداة هدية إلى كل معلم ومعلمة .. تطوير وبرمجة المهندس : محمد بن سالم الدوسري<br />
-                <a href="mailto:msaldossary.sa@gmail.com" className="underline">msaldossary.sa@gmail.com</a>
+              <div className="w-full text-center pt-4 text-[15px] text-emerald-800/90 font-medium drop-shadow-sm">
+                هذه الأداة هدية إلى كل معلم ومعلمة<br />
+                <span className="text-emerald-700/80">تطوير وبرمجة المهندس : محمد بن سالم الدوسري</span><br />
+                <a href="mailto:msaldossary.sa@gmail.com" className="underline hover:text-emerald-600">msaldossary.sa@gmail.com</a>
               </div>
             </form>
           </div>

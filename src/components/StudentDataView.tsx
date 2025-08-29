@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Class, Subject, ColumnType, Settings } from '../types';
-import { StudentTable, getContrastColor } from './StudentTable';
+import { getContrastColor } from '../utils/colorUtils';
+import StudentTable from './StudentTable';
 import MainToolbar from './MainToolbar';
 import ClassSubjectFilters from './ClassSubjectFilters';
 import AddColumnModal from './AddColumnModal';
 import ImportStudentsModal from './ImportStudentsModal';
 import AddStudentModal from './AddStudentModal';
+import ConfirmModal from './ConfirmModal';
 import { ClipboardListIcon, ChevronRightIcon, ChevronLeftIcon } from './Icons';
+import { getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
+
 // تم الاستغناء عن الزر العائم لصالح شريط الأدوات العلوي
 
 // @ts-ignore
@@ -22,21 +26,25 @@ interface StudentDataViewProps {
   onFillColumn: (classId: string, subjectId: string, columnId: string, value: any) => void;
   onImportStudents: (classId: string, subjectId: string, importedData: any[], studentNameColumn: string, columnsToImport: { header: string, type: ColumnType }[]) => void;
   onAddStudent: (classId: string, name: string) => void;
+  setClasses?: (updater: (prev: Class[]) => Class[]) => void; // إضافة دالة تحديث الصفوف
   onUpdateStudentData: (classId: string, studentId: string, columnId: string, value: any) => void;
   onDeleteStudent: (classId: string, studentId: string, studentName: string) => void;
   settings: Settings;
   apiKey: string | null;
   onRequestApiKey: () => void;
   color?: string;
+  onSaveTemplate?: () => void;
+  onUseTemplate?: () => void;
+  onAddClass?: () => void;
+  onAddSubject?: () => void;
+  onExportExcel?: () => void;
+  onExportPdf?: () => void;
+  onOpenSettings?: () => void;
+  onOpenCustomize?: () => void;
+  onAdminExport?: () => void;
 }
 
 function StudentDataViewImpl(props: StudentDataViewProps & {
-  onAddClass?: any;
-  onAddSubject?: any;
-  onExportExcel?: any;
-  onExportPdf?: any;
-  onOpenSettings?: any;
-  onOpenCustomize?: any;
   classes?: any;
   activeClassId?: any;
   activeSubjectId?: any;
@@ -83,11 +91,12 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
       return luminance > 170 ? '#222' : '#fff';
     }
-    html += '<tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;">${h}</th>`).join('') + '</tr>';
+    html += '<thead><tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;">${h}</th>`).join('') + '</tr></thead>';
+    html += '<tbody>';
     body.forEach(row => {
       html += '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
     });
-    html += '</table>';
+    html += '</tbody></table>';
     // Signers table with signature column
     html += `<table border='1' cellspacing='0' cellpadding='4' style='width:70%;border-collapse:collapse;margin:auto;'>`;
     html += `<tr>` +
@@ -100,7 +109,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     html += '</div>';
     const win = window.open('', '_blank');
     if (win) {
-  const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',Tahoma,Arial,sans-serif;}\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
+  const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',Tahoma,Arial,sans-serif;}\ntable thead th { position: sticky; top: 0; z-index: 2; background: ${pdfColor} !important; }\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } thead { display: table-header-group; } tfoot { display: table-footer-group; } }`;
       win.document.write(`<html><head><title>${adminReportName || ''}</title><style>${style}</style></head><body>${html}</body></html>`);
       win.document.close();
       win.print();
@@ -289,35 +298,97 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  // حالة للفرز الأبجدي للأسماء
+  const [nameSortOrder, setNameSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // حالة لنافذة تأكيد حذف جميع الطلاب
+  const [isConfirmDeleteAllOpen, setIsConfirmDeleteAllOpen] = useState(false);
+  
+  // دالة لحذف جميع الطلاب - تفتح نافذة تأكيد فقط
+  const handleDeleteAllStudents = () => {
+    if (activeClass && activeClass.students && activeClass.students.length > 0) {
+      // فتح نافذة التأكيد بدلاً من حذف الطلاب مباشرة
+      setIsConfirmDeleteAllOpen(true);
+    }
+  };
+  
+  // عند تأكيد حذف جميع الطلاب - هذا ينفذ بعد النقر على "حذف الجميع" في نافذة التأكيد
+  const confirmDeleteAllStudents = () => {
+    if (activeClass && activeClass.students && activeClass.students.length > 0 && props.setClasses) {
+      const studentsCount = activeClass.students.length;
+      
+      try {
+        // إخفاء نافذة التأكيد
+        setIsConfirmDeleteAllOpen(false);
+        
+        // استخدام دالة setClasses المستلمة من App.tsx
+        props.setClasses((prevClasses: Class[]) => 
+          prevClasses.map((cls: Class) => 
+            cls.id === activeClass.id 
+              ? { ...cls, students: [] } // حذف جميع الطلاب من الصف الحالي
+              : cls
+          )
+        );
+        
+        // إظهار رسالة نجاح
+        toast.success(`تم حذف ${studentsCount} اسم بنجاح`);
+        
+      } catch (error) {
+        console.error('خطأ أثناء حذف جميع الأسماء:', error);
+        toast.error('حدث خطأ أثناء محاولة حذف جميع الأسماء');
+      }
+    } else if (!props.setClasses) {
+      // إذا لم يتم تمرير دالة setClasses
+      toast.error('حدث خطأ: لا يمكن تحديث البيانات');
+      setIsConfirmDeleteAllOpen(false);
+    }
+  };
   
   const themeColor = color || activeSubject?.themeColor || '#2E8540';
 
+  // فرز الطلاب حسب الاسم أبجديًا
+  const sortedAllStudents = useMemo(() => {
+    if (!activeClass?.students) return [];
+    
+    return [...activeClass.students].sort((a, b) => {
+      if (nameSortOrder === 'asc') {
+        return (a.name || '').localeCompare(b.name || '', 'ar');
+      } else {
+        return (b.name || '').localeCompare(a.name || '', 'ar');
+      }
+    });
+  }, [activeClass?.students, nameSortOrder]);
+
   // Pagination Logic
-  const totalStudents = activeClass?.students.length || 0;
+  const totalStudents = sortedAllStudents.length || 0;
   const totalPages = Math.ceil(totalStudents / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   // أضف رقم تسلسل حقيقي لكل طالب بناءً على ترتيبه في الجدول الكامل
-  const paginatedStudents = (activeClass?.students.slice(startIndex, endIndex).map((student: any, i: number) => ({
+  const paginatedStudents = (sortedAllStudents.slice(startIndex, endIndex).map((student: any, i: number) => ({
     ...student,
-    serial: startIndex + i + 1
+    serial: nameSortOrder === 'asc' ? (startIndex + i + 1) : (totalStudents - startIndex - i)
   })) || []);
+
+
+  // ترتيب الأعمدة حسب الحفظ في localStorage
+  const savedOrder = getColumnOrder();
+  const columnsInOrder = orderColumns(activeSubject?.columns || [], savedOrder);
 
   const generateReportData = () => {
     if (!activeClass || !activeSubject) return null;
-  // إذا كان نوع الفصل إداري (منسوبين)، غيّر العنوان إلى "الاسم" بدلاً من "اسم الطالب"
-  const isAdmin = activeClass?.type === 'admin' || activeClass?.type === 'staff' || activeClass?.name?.includes('منسوب');
-  const tableHeader = ['م', isAdmin ? 'الاسم' : 'اسم الطالب', ...activeSubject.columns.map((c: any) => c.name)];
-  const body = activeClass.students.map((student: any, index: number) => [
-    (index + 1).toString(),
-    student.name,
-    ...activeSubject.columns.map((col: any) => {
-      const value = student.records[col.id];
-      if (value === null || value === undefined) return '';
-      if (col.type === ColumnType.CHECKBOX) return value ? '✔' : '✗';
-      return value.toString();
-    })
-  ]);
+    // استخدم الأعمدة المرتبة (columnsInOrder) بدلاً من activeSubject.columns
+    const tableHeader = ['م', 'الاسم', ...columnsInOrder.map((c: any) => c.name)];
+    const body = activeClass.students.map((student: any, index: number) => [
+      (index + 1).toString(),
+      student.name,
+      ...columnsInOrder.map((col: any) => {
+        const value = student.records[col.id];
+        if (value === null || value === undefined) return '';
+        if (col.type === ColumnType.CHECKBOX) return value ? '✔' : '✗';
+        return value.toString();
+      })
+    ]);
     return { tableHeader, body, themeColor };
   }
 
@@ -503,6 +574,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
             onExportPdf={() => {}}
             onOpenSettings={onOpenSettings}
             onOpenCustomize={onOpenCustomize}
+            onSaveTemplate={props.onSaveTemplate}
+            onUseTemplate={props.onUseTemplate}
             classType={activeClass?.type}
           />
         </div>
@@ -537,6 +610,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         onExportPdf={onExportPdf}
         onOpenSettings={onOpenSettings}
         onOpenCustomize={onOpenCustomize}
+        onSaveTemplate={props.onSaveTemplate}
+        onUseTemplate={props.onUseTemplate}
         classType={activeClass?.type}
         onAdminExport={() => setIsAdminModalOpen(true)}
       />
@@ -635,14 +710,18 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       <div className="w-full flex-1 flex flex-col items-center justify-start" style={{marginTop:0,paddingTop:0,border:'none'}}>
         <div className="w-full max-w-6xl 2xl:max-w-4xl overflow-x-auto custom-scroll relative" style={{ direction: 'rtl', margin: '0 auto', marginTop: 0, paddingTop: 0, top: 0, border:'none' }}>
           <StudentTable
-            columns={activeSubject.columns}
+            columns={columnsInOrder}
             students={paginatedStudents}
             onEditColumn={(columnId, updatedData) => onEditColumn(activeClass.id, activeSubject.id, String(columnId), updatedData)}
             onDeleteColumn={(columnId, columnName) => onDeleteColumn(activeClass.id, activeSubject.id, String(columnId), columnName)}
             onDeleteStudent={(studentId, studentName) => onDeleteStudent(activeClass.id, String(studentId), studentName)}
+            onDeleteAllStudents={handleDeleteAllStudents}
             onFillColumn={(columnId, value) => onFillColumn(activeClass.id, activeSubject.id, String(columnId), value)}
             onUpdateStudentData={(studentId, columnId, value) => onUpdateStudentData(activeClass.id, String(studentId), String(columnId), value)}
             themeColor={themeColor}
+            nameSortOrder={nameSortOrder}
+            onNameSortChange={setNameSortOrder}
+            // لا تمرر دالة onColumnOrderChange
           />
           {/* شريط تمرير سفلي ظاهر دائماً عند الحاجة */}
           <div className="w-full overflow-x-auto mt-1" style={{ height: 12 }}>
@@ -725,6 +804,16 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
             onAddStudent(activeClass.id, name);
             setIsAddStudentModalOpen(false);
           }}
+        />
+      )}
+      
+      {/* نافذة تأكيد حذف جميع الأسماء */}
+      {isConfirmDeleteAllOpen && (
+        <ConfirmModal
+          message={`هل أنت متأكد من أنك تريد حذف جميع الأسماء (${activeClass?.students?.length || 0})؟ لا يمكن التراجع عن هذا الإجراء.`}
+          confirmLabel="حذف الجميع"
+          onConfirm={confirmDeleteAllStudents}
+          onCancel={() => setIsConfirmDeleteAllOpen(false)}
         />
       )}
     </div>

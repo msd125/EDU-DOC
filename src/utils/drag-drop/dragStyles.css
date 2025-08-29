@@ -1,0 +1,79 @@
+/* Estilos para drag and drop en la tabla de estudiantes */
+
+/* Estilos para la cabecera arrastrable */
+.draggable-column-container {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.draggable-header {
+  padding: 12px 16px;
+  min-width: 150px;
+  font-weight: 600;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-right: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+  background-color: #f9fafb;
+}
+
+.draggable-header:last-child {
+  border-right: none;
+}
+
+.drag-handle {
+  opacity: 0.3;
+  cursor: grab;
+  margin-left: 8px;
+  font-size: 16px;
+  user-select: none;
+}
+
+.draggable-header:hover .drag-handle {
+  opacity: 0.8;
+}
+
+/* Estilos durante el arrastre */
+.draggable-header.dragging {
+  opacity: 0.4;
+  background-color: #e5e7eb;
+  border: 1px dashed #9ca3af;
+}
+
+.draggable-header.drag-over {
+  background-color: #eff6ff;
+  border-left: 2px solid #3b82f6;
+}
+
+/* Estilos para la tabla con drag and drop */
+.student-table-with-drag-drop {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Soporte para RTL */
+[dir="rtl"] .draggable-header {
+  border-right: none;
+  border-left: 1px solid #f3f4f6;
+}
+
+[dir="rtl"] .draggable-header:last-child {
+  border-left: none;
+}
+
+[dir="rtl"] .drag-handle {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+[dir="rtl"] .draggable-header.drag-over {
+  border-left: none;
+  border-right: 2px solid #3b82f6;
+}

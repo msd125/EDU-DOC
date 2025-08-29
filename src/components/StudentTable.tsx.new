@@ -1,13 +1,35 @@
+// دالة تحدد لون الأيقونة (أسود أو أبيض) حسب سطوع اللون
+export function getContrastColor(hex: string | undefined): string {
+  if (!hex) return '#fff';
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  // معادلة السطوع
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance > 170 ? '#222' : '#fff';
+}
+
+// دالة تلوين خلفية الأعمدة مع شفافية
+function getHeaderBg(color?: string) {
+  if (!color) return 'rgba(46,133,64,0.08)';
+  // تحويل HEX إلى RGBA مع شفافية
+  let c = color.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r},${g},${b},0.08)`;
+}
+
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { getContrastColor, getHeaderBg } from '../utils/colorUtils';
 import EditColumnModal from './EditColumnModal';
 import { EditIcon, TrashIcon, EllipsisIcon } from './Icons';
 import DraggableColumns from './DraggableColumns';
 import '../styles/draggable-columns.css';
-import { saveColumnOrder, getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
 
 interface ColumnType {
   id: string | number;
@@ -38,24 +60,6 @@ interface StudentTableProps {
   onColumnOrderChange?: (columns: ColumnType[]) => void;
 }
 
-// حفظ ترتيب الأعمدة في localStorage
-const COLUMN_ORDER_KEY = 'columnOrder';
-
-function saveColumnOrderLocal(order: (string | number)[]) {
-  try {
-    localStorage.setItem(COLUMN_ORDER_KEY, JSON.stringify(order));
-  } catch {}
-}
-
-function getColumnOrderLocal(): (string | number)[] | null {
-  try {
-    const saved = localStorage.getItem(COLUMN_ORDER_KEY);
-    return saved ? JSON.parse(saved) : null;
-  } catch {
-    return null;
-  }
-}
-
 const StudentTable: React.FC<StudentTableProps> = (props) => {
   const { 
     columns, 
@@ -77,24 +81,18 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
   
   // Ordered columns state
   const [orderedColumns, setOrderedColumns] = useState<ColumnType[]>(() => {
-    const savedOrder = getColumnOrder();
-    return orderColumns(columns, savedOrder);
+    return [...columns]; // Initialize with original columns
   });
 
   // Update ordered columns when original columns change
   useEffect(() => {
-    const savedOrder = getColumnOrder();
-    setOrderedColumns(orderColumns(columns, savedOrder));
+    setOrderedColumns([...columns]);
   }, [columns]);
 
   // Handle column order change
   const handleColumnOrderChange = (newColumns: ColumnType[]) => {
     setOrderedColumns(newColumns);
-    saveColumnOrder(newColumns.map(col => col.id));
-    toast.success('تم حفظ ترتيب الأعمدة');
-    setTimeout(() => {
-      window.location.reload();
-    }, 600);
+    
     if (onColumnOrderChange) {
       onColumnOrderChange(newColumns);
     }
@@ -152,8 +150,7 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
+    <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
       <div className="w-full flex justify-end mb-2 px-4">
         <div className="relative" ref={menuRef}>
           <button
@@ -403,7 +400,6 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
         }
       `}</style>
     </div>
-    </DndProvider>
   );
 };
 

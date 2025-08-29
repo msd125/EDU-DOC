@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+
 /* إخفاء الأسهم في جميع حقول الأرقام */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
@@ -7,9 +11,6 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
 	-moz-appearance: textfield;
 }
-@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 body {
@@ -23,6 +24,21 @@ body {
 
 html {
 	scroll-behavior: smooth;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-in-out forwards;
 	box-sizing: border-box;
 	font-size: 16px;
 }
@@ -76,4 +92,20 @@ main, .main-content, .container, .app-container {
   opacity: 1 !important;
   transform: scale(1.13) rotate(-8deg);
   transition: filter 0.18s, opacity 0.18s, transform 0.18s;
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@supports not ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+  .glass {
+    background: rgba(255,255,255,0.95);
+  }
 }

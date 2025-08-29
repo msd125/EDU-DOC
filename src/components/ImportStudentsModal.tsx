@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 // استيراد دالة التباين من كشف الطلاب
-import { getContrastColor } from './StudentTable';
+import { getContrastColor } from '../utils/colorUtils';
 import { ColumnType } from '../types';
 import { PlusIcon, TrashIcon } from './Icons';
 

@@ -44,3 +44,19 @@ export interface Class {
   students: Student[];
   subjects: Subject[];
 }
+
+export interface Template {
+  id: string;
+  name: string;
+  description?: string;
+  columns: Column[];
+  isPublic: boolean;
+  isOwner?: boolean;
+  ownerName?: string;
+  columnCount?: number;
+  createdAt: number;
+  isImported?: boolean;         // هل هذا قالب مستورد
+  importedFrom?: string;        // معلومات المصدر (اسم المعلم أو المؤسسة)
+  importedDate?: number;        // تاريخ الاستيراد
+  exportCode?: string;          // رمز التصدير الفريد
+}

@@ -1,0 +1,44 @@
+.column-drag-handle {
+  cursor: grab;
+  opacity: 0.4;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.column-drag-handle:hover {
+  opacity: 1;
+}
+
+/* تنسيقات للعمود أثناء السحب */
+.drag-column-header.dragging {
+  opacity: 0.5;
+  background-color: rgba(200, 200, 200, 0.5);
+  border: 1px dashed #aaa;
+}
+
+/* تنسيقات عند السحب فوق العمود */
+.drag-column-header.drag-over {
+  border-right: 3px solid #3b82f6;
+}
+
+/* تعديلات لدعم النص العربي (RTL) */
+[dir="rtl"] .drag-column-header.drag-over {
+  border-right: none;
+  border-left: 3px solid #3b82f6;
+}
+
+[dir="rtl"] .column-drag-handle {
+  margin-right: 0;
+  margin-left: 5px;
+}
+
+/* أنيميشن للإشارة إلى إمكانية السحب */
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+}
+
+.drag-column-header:hover .column-drag-handle {
+  animation: wiggle 1s ease-in-out infinite;
+}
