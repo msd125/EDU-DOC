@@ -76,7 +76,7 @@ const DraggableHeader = ({
       }`}
       style={{
         opacity: isDragging ? 0.5 : 1,
-        fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+  fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',

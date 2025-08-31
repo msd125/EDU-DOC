@@ -43,7 +43,7 @@ const DraggableHeaders: React.FC<DraggableHeadersProps> = ({
                     className={`px-1 sm:px-2 py-2 min-w-[80px] md:min-w-[120px] max-w-[180px] text-center align-top border-slate-200 border-l last:border-l-0 group relative text-xs font-bold ${snapshot.isDragging ? 'opacity-75 shadow-lg z-50 !bg-emerald-100' : ''}`}
                     style={{ 
                       ...provided.draggableProps.style,
-                      fontFamily: 'Noto Sans Arabic, Cairo, sans-serif', 
+                      fontFamily: 'Noto Sans Arabic, sans-serif', 
                       overflow: 'hidden', 
                       textOverflow: 'ellipsis', 
                       whiteSpace: 'nowrap', 

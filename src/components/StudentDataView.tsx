@@ -59,7 +59,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     if (!reportData) return;
     const { tableHeader, body } = reportData;
     // School header
-  let html = `<div style=\"direction:rtl;font-family:'Cairo',sans-serif;\">`;
+  let html = `<div style=\"direction:rtl;font-family:'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif;\">`;
     html += `<div style='text-align:center;margin-bottom:2px;font-size:18px;font-weight:bold;'>المملكة العربية السعودية</div>`;
     html += `<div style='text-align:center;margin-bottom:8px;font-size:16px;'>وزارة التعليم</div>`;
     html += `<div style='text-align:center;margin-bottom:8px;font-size:16px;'>${settings.educationDirectorate || ''}</div>`;
@@ -109,7 +109,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     html += '</div>';
     const win = window.open('', '_blank');
     if (win) {
-  const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',sans-serif;}\ntable thead th { position: sticky; top: 0; z-index: 2; background: ${pdfColor} !important; }\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } thead { display: table-header-group; } tfoot { display: table-footer-group; } }`;
+  const style = `@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');\nbody{font-family:'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif;}\ntable thead th { position: sticky; top: 0; z-index: 2; background: ${pdfColor} !important; }\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } thead { display: table-header-group; } tfoot { display: table-footer-group; } }`;
       win.document.write(`<html><head><title>${adminReportName || ''}</title><style>${style}</style></head><body>${html}</body></html>`);
       win.document.close();
       win.print();
@@ -186,7 +186,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     let b = num & 0xff;
     if (r > 220 && g > 220 && b > 220) excelColor = darken(excelColor, 0.3);
     const headerStyle = {
-      font: { bold: true, color: { rgb: 'FFFFFFFF' }, name: 'Cairo' },
+      font: { bold: true, color: { rgb: 'FFFFFFFF' }, name: 'Noto Sans Arabic' },
       fill: { fgColor: { rgb: excelColor.toUpperCase() } },
       alignment: { horizontal: 'center', vertical: 'center' },
       border: borderStyle
@@ -194,12 +194,12 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     const bodyStyleRight = {
       alignment: { horizontal: 'right', vertical: 'center' },
       border: borderStyle,
-      font: { name: 'Cairo' }
+      font: { name: 'Noto Sans Arabic' }
     };
     const bodyStyleCenter = {
       alignment: { horizontal: 'center', vertical: 'center' },
       border: borderStyle,
-      font: { name: 'Cairo' }
+      font: { name: 'Noto Sans Arabic' }
     };
     // Apply header style to table header row
     const tableHeaderRowIdx = headerRows.length;
@@ -545,7 +545,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-        printWindow.document.write('<html><head><title>طباعة سجل - ' + activeSubject.name + '</title><style>@import url(\'https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap\'); body { font-family: \'Cairo\', sans-serif; direction: rtl; margin: 20px; } table { font-size: 12px; } @media print { @page { size: A4 landscape; margin: 15mm; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } } </style></head><body>' + headerHtml + tableHtml + footerHtml + '<script>window.onload = function() { setTimeout(function() { window.print(); window.onafterprint = function() { window.close(); } }, 100); } </script></body></html>');
+  printWindow.document.write('<html><head><title>طباعة سجل - ' + activeSubject.name + '</title><style>@import url(\'https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap\'); body { font-family: \'Almarai\',\'Cairo\',\'Noto Sans Arabic\',\'Amiri\',sans-serif; direction: rtl; margin: 20px; } table { font-size: 12px; } @media print { @page { size: A4 landscape; margin: 15mm; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } } </style></head><body>' + headerHtml + tableHtml + footerHtml + '<script>window.onload = function() { setTimeout(function() { window.print(); window.onafterprint = function() { window.close(); } }, 100); } </script></body></html>');
         printWindow.document.close();
     } else {
         toast.error('فشل فتح نافذة الطباعة. الرجاء التأكد من السماح بالنوافذ المنبثقة.');

@@ -216,7 +216,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                   backgroundColor: '#fff',
                   borderTopLeftRadius: 12,
                   borderTopRightRadius: 12,
-                  fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                  fontFamily: 'Noto Sans Arabic, sans-serif',
                   boxShadow: '0 2px 8px -2px #0002',
                 }}>
                 <tr>
@@ -225,7 +225,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                       key={h}
                       className="p-2 font-semibold text-xs text-center"
                       style={{
-                        fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+                        fontFamily: 'Noto Sans Arabic, sans-serif',
                         color: getContrastColor('#fff'),
                         letterSpacing: '1px',
                         background: 'transparent',

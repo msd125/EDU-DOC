@@ -40,7 +40,7 @@ const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({
           }`}
           style={{
             ...provided.draggableProps.style,
-            fontFamily: 'Noto Sans Arabic, Cairo, sans-serif',
+            fontFamily: 'Noto Sans Arabic, sans-serif',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
