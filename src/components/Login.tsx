@@ -109,8 +109,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
               {registerError && <p className="text-sm text-red-500 text-center">{registerError}</p>}
               <div className="flex gap-2">
-                <button type="submit" className="w-full px-4 py-2 text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] focus:ring-4 focus:outline-none focus:ring-green-300 font-medium transition-all duration-300">تسجيل</button>
-                <button type="button" className="w-full px-4 py-2 text-[#2E8540] bg-slate-200 rounded-lg hover:bg-slate-300 focus:ring-4 focus:outline-none focus:ring-green-100 font-medium transition-all duration-300" onClick={() => setShowRegister(false)}>إلغاء</button>
+                <button type="submit" className="btn-3d w-full px-4 py-2 text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] focus:ring-4 focus:outline-none focus:ring-green-300 font-medium transition-all duration-300">تسجيل</button>
+                <button type="button" className="btn-3d w-full px-4 py-2 text-[#2E8540] bg-slate-200 rounded-lg hover:bg-slate-300 focus:ring-4 focus:outline-none focus:ring-green-100 font-medium transition-all duration-300" onClick={() => setShowRegister(false)}>إلغاء</button>
               </div>
             </form>
           </div>

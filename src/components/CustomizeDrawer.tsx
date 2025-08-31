@@ -170,7 +170,7 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
           <form className="flex flex-col gap-2 mb-4" onSubmit={e => { e.preventDefault(); if (newClassName.trim()) { onAddClass(newClassName.trim(), newClassType); setNewClassName(''); setNewClassType('تعليمي'); } }}>
             <div className="flex gap-2">
               <input type="text" className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:ring-2 focus:ring-emerald-400 transition-all" placeholder="اسم الفصل الجديد..." value={newClassName} onChange={e => setNewClassName(e.target.value)} />
-              <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:bg-slate-400 text-sm font-semibold shadow-sm transition-all" disabled={!newClassName.trim()}>إضافة فصل</button>
+              <button type="submit" className="btn-3d bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:bg-slate-400 text-sm font-semibold shadow-sm transition-all" disabled={!newClassName.trim()}>إضافة فصل</button>
             </div>
             <div className="flex gap-4 items-center mt-1">
               <label className="flex items-center gap-1 text-sm font-medium">
@@ -244,8 +244,8 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
                   {!isCollapsed && addingSubjectToClass === cls.id && (
                     <form className="flex gap-2 mb-2" onSubmit={e => { e.preventDefault(); if (newSubjectName.trim()) { onAddSubject(cls, newSubjectName.trim()); setNewSubjectName(''); setAddingSubjectToClass(null); } }}>
                       <input type="text" className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:ring-2 focus:ring-blue-400 transition-all" placeholder="اسم المادة الجديدة..." value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} autoFocus />
-                      <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-slate-400 text-sm font-semibold shadow-sm transition-all" disabled={!newSubjectName.trim()}>إضافة مادة</button>
-                      <button type="button" className="bg-slate-200 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-300 text-sm font-semibold transition-all" onClick={() => { setAddingSubjectToClass(null); setNewSubjectName(''); }}>إلغاء</button>
+                      <button type="submit" className="btn-3d bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-slate-400 text-sm font-semibold shadow-sm transition-all" disabled={!newSubjectName.trim()}>إضافة مادة</button>
+                      <button type="button" className="btn-3d bg-slate-200 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-300 text-sm font-semibold transition-all" onClick={() => { setAddingSubjectToClass(null); setNewSubjectName(''); }}>إلغاء</button>
                     </form>
                   )}
                   {/* قائمة المواد بدون أزرار الألوان */}

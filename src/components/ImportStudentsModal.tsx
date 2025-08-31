@@ -173,7 +173,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
                 </div>
                 {fileHeaders.length > 0 && fileData.length > 0 && (
                   <div className="flex justify-end mt-6">
-                    <button onClick={goToMappingStep} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>
+                    <button onClick={goToMappingStep} className="btn-3d py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>
                   </div>
                 )}
                 {fileHeaders.length === 0 && fileData.length === 0 && (
@@ -329,12 +329,12 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onIm
 
   <div className="flex justify-between items-center gap-4 mt-8 pt-4 border-t">
           <div>
-            {step > 1 && <button onClick={() => setStep(s => s - 1)} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 transition-colors">السابق</button>}
+            {step > 1 && <button onClick={() => setStep(s => s - 1)} className="btn-3d py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 transition-colors">السابق</button>}
           </div>
           <div className="flex gap-4">
-             <button onClick={onClose} className="py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 transition-colors">إلغاء</button>
-            {step === 2 && <button onClick={goToMappingStep} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>}
-            {step === 3 && <button onClick={handleImport} disabled={isImportDisabled} className="py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">استيراد الأسماء</button>}
+             <button onClick={onClose} className="btn-3d py-2 px-4 text-sm font-medium bg-white rounded-lg border hover:bg-slate-100 transition-colors">إلغاء</button>
+            {step === 2 && <button onClick={goToMappingStep} className="btn-3d py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] transition-colors">التالي</button>}
+            {step === 3 && <button onClick={handleImport} disabled={isImportDisabled} className="btn-3d py-2 px-4 text-sm font-medium text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">استيراد الأسماء</button>}
           </div>
         </div>
       </div>
