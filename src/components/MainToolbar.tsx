@@ -43,7 +43,7 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
       </button>
       {classType !== 'إداري' && (
         <>
-          <button onClick={() => { console.log('MainToolbar: Export Excel clicked', typeof onExportExcel); if (onExportExcel) onExportExcel(); }} className="flex items-center gap-1 px-3 py-1.5 rounded bg-green-700 text-white hover:bg-green-800 text-xs font-semibold transition-all">
+          <button onClick={onExportExcel} className="flex items-center gap-1 px-3 py-1.5 rounded bg-green-700 text-white hover:bg-green-800 text-xs font-semibold transition-all">
             <DownloadIcon className="w-4 h-4" /> تصدير Excel
           </button>
           <button onClick={onExportPdf} className="flex items-center gap-1 px-3 py-1.5 rounded bg-red-600 text-white hover:bg-red-700 text-xs font-semibold transition-all">
