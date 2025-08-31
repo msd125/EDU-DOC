@@ -59,7 +59,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     if (!reportData) return;
     const { tableHeader, body } = reportData;
     // School header
-    let html = `<div style='direction:rtl;font-family:Cairo, Tahoma, Arial, sans-serif;'>`;
+  let html = `<div style=\"direction:rtl;font-family:'Cairo',sans-serif;\">`;
     html += `<div style='text-align:center;margin-bottom:2px;font-size:18px;font-weight:bold;'>المملكة العربية السعودية</div>`;
     html += `<div style='text-align:center;margin-bottom:8px;font-size:16px;'>وزارة التعليم</div>`;
     html += `<div style='text-align:center;margin-bottom:8px;font-size:16px;'>${settings.educationDirectorate || ''}</div>`;
@@ -109,7 +109,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     html += '</div>';
     const win = window.open('', '_blank');
     if (win) {
-  const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',Tahoma,Arial,sans-serif;}\ntable thead th { position: sticky; top: 0; z-index: 2; background: ${pdfColor} !important; }\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } thead { display: table-header-group; } tfoot { display: table-footer-group; } }`;
+  const style = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\nbody{font-family:'Cairo',sans-serif;}\ntable thead th { position: sticky; top: 0; z-index: 2; background: ${pdfColor} !important; }\n@media print { th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; } thead { display: table-header-group; } tfoot { display: table-footer-group; } }`;
       win.document.write(`<html><head><title>${adminReportName || ''}</title><style>${style}</style></head><body>${html}</body></html>`);
       win.document.close();
       win.print();
