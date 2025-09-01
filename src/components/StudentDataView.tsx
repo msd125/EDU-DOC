@@ -565,7 +565,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr>
-            ${tableHeader.map(h => `<th style="border: 1px solid #333; padding: 8px; background-color: ${themeColor}; color: ${getContrastColor(themeColor)}; text-align: center; font-weight: bold;">${h}</th>`).join('')}
+            ${tableHeader.map(h => `<th style="border: 1px solid #333; padding: 8px; background-color: ${themeColor}; color: ${getContrastColor(themeColor)}; text-align: center; font-weight: bold; font-family: 'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif !important;">${h}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
