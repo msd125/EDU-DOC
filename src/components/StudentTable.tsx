@@ -200,14 +200,14 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
               backgroundColor: themeColor || '#2E8540',
               borderTopLeftRadius: 12,
               borderTopRightRadius: 12,
-              fontFamily: 'Noto Sans Arabic, sans-serif',
+              fontFamily: "'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif",
               boxShadow: '0 2px 8px -2px #0002',
               color: getContrastColor(themeColor || '#2E8540'),
             }}>
             <tr>
               <th className="px-1 sm:px-2 py-2 sticky right-0 min-w-[60px] max-w-[60px] text-center z-30 text-xs font-bold border-r-4 border-slate-300 shadow-lg serial-header"
                   style={{
-                    fontFamily: 'Noto Sans Arabic, sans-serif',
+                    fontFamily: "'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif",
                     boxShadow: '2px 0 8px -2px #0002',
                     color: getContrastColor('#22c55e'),
                     background: 'rgba(34,197,94,0.85)', // أخضر مع شفافية أقل
@@ -216,7 +216,7 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                   }}>م</th>
               <th className="px-1 sm:px-2 py-2 sticky right-0 min-w-[200px] max-w-[320px] text-center z-30 text-xs font-bold border-r-4 border-slate-300 shadow-lg name-header"
                   style={{
-                    fontFamily: 'Noto Sans Arabic, sans-serif',
+                    fontFamily: "'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif",
                     boxShadow: '2px 0 8px -2px #0002',
                     color: getContrastColor('#0ea5e9'),
                     background: 'rgba(14,165,233,0.85)', // أزرق مع شفافية أقل
