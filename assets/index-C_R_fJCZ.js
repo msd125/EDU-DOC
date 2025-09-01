@@ -298,7 +298,7 @@ ${E.educationDirectorate}
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr>
-            ${Re.map(lt=>`<th style="border: 1px solid #333; padding: 8px; background-color: ${tr}; color: ${Ca(tr)}; text-align: center; font-weight: bold;">${lt}</th>`).join("")}
+            ${Re.map(lt=>`<th style="border: 1px solid #333; padding: 8px; background-color: ${tr}; color: ${Ca(tr)}; text-align: center; font-weight: bold; font-family: 'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif !important;">${lt}</th>`).join("")}
           </tr>
         </thead>
         <tbody>
