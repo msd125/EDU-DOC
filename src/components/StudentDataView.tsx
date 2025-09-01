@@ -91,10 +91,37 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
       return luminance > 170 ? '#222' : '#fff';
     }
+    // دالة لجلب تخصيص الخلية من localStorage
+    // مفتاح التخصيص يجب أن يكون مطابقًا لمفتاح ColorfulCell (studentId-colId)
+    function getCellStyle(studentId: string, colId: string) {
+      try {
+        const key = `colorfulcell-${studentId}-${colId}`;
+        const data = localStorage.getItem(key);
+        if (!data) return '';
+        const { bgColor, textColor, fontSize, textAlign } = JSON.parse(data);
+        let style = '';
+        if (bgColor) style += `background:${bgColor};`;
+        if (textColor) style += `color:${textColor};`;
+        if (fontSize) style += `font-size:${fontSize};`;
+        if (textAlign) style += `text-align:${textAlign};`;
+        return style;
+      } catch { return ''; }
+    }
     html += '<thead><tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;">${h}</th>`).join('') + '</tr></thead>';
     html += '<tbody>';
-    body.forEach(row => {
-      html += '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+    body.forEach((row, rowIdx) => {
+      const student = activeClass.students[rowIdx];
+      html += '<tr>' + row.map((cell, cellIndex) => {
+        if (cellIndex < 2) {
+          // عمود التسلسل أو الاسم: لا تخصيص
+          return `<td style="border: 1px solid #333; padding: 8px; text-align: ${cellIndex === 1 ? 'right' : 'center'};">${cell}</td>`;
+        } else {
+          const col = columnsInOrder[cellIndex - 2];
+          // مفتاح الخلية يكون studentId-colId
+          const style = getCellStyle(student.id, col.id);
+          return `<td style="border: 1px solid #333; padding: 8px; ${style}">${cell}</td>`;
+        }
+      }).join('') + '</tr>';
     });
     html += '</tbody></table>';
     // Signers table with signature column
@@ -300,6 +327,11 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   // حالة للفرز الأبجدي للأسماء
   const [nameSortOrder, setNameSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // إعادة تعيين الصفحة عند تغيير الفصل أو المادة
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeClass, activeSubject]);
   
   // حالة لنافذة تأكيد حذف جميع الطلاب
   const [isConfirmDeleteAllOpen, setIsConfirmDeleteAllOpen] = useState(false);
@@ -513,6 +545,22 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       </div>
     `;
 
+    // دالة لجلب تخصيص الخلية من localStorage
+    function getCellStyle(studentId: string, colId: string) {
+      try {
+        const key = `colorfulcell-${studentId}-${colId}`;
+        const data = localStorage.getItem(key);
+        if (!data) return '';
+        const { bgColor, textColor, fontSize, textAlign } = JSON.parse(data);
+        let style = '';
+        if (bgColor) style += `background:${bgColor};`;
+        if (textColor) style += `color:${textColor};`;
+        if (fontSize) style += `font-size:${fontSize};`;
+        if (textAlign) style += `text-align:${textAlign};`;
+        return style;
+      } catch { return ''; }
+    }
+
     const tableHtml = `
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
@@ -521,11 +569,24 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
           </tr>
         </thead>
         <tbody>
-          ${body.map((row: any[]) => `
-            <tr>
-              ${row.map((cell: any, cellIndex: number) => '<td style="border: 1px solid #333; padding: 8px; text-align: ' + (cellIndex === 1 ? 'right' : 'center') + ';">' + cell + '</td>').join('')}
-            </tr>
-          `).join('')}
+          ${body.map((row: any[], rowIdx: number) => {
+            const student = activeClass.students[rowIdx];
+            return `
+              <tr>
+                ${row.map((cell: any, cellIndex: number) => {
+                  // cellIndex: 0 => serial, 1 => name, 2+ => columnsInOrder
+                  if (cellIndex < 2) {
+                    // عمود التسلسل أو الاسم: لا تخصيص
+                    return `<td style="border: 1px solid #333; padding: 8px; text-align: ${cellIndex === 1 ? 'right' : 'center'};">${cell}</td>`;
+                  } else {
+                    const col = columnsInOrder[cellIndex - 2];
+                    const style = getCellStyle(student.id, col.id);
+                    return `<td style="border: 1px solid #333; padding: 8px; ${style}">${cell}</td>`;
+                  }
+                }).join('')}
+              </tr>
+            `;
+          }).join('')}
         </tbody>
       </table>
     `;

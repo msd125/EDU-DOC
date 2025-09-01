@@ -8,6 +8,7 @@ import { EditIcon, TrashIcon, EllipsisIcon } from './Icons';
 import DraggableColumns from './DraggableColumns';
 import '../styles/draggable-columns.css';
 import { saveColumnOrder, getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
+import ColorfulCell from './ColorfulCell';
 
 interface ColumnType {
   id: string | number;
@@ -142,6 +143,10 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
     };
   }, [menuRef]);
   
+
+  // إدارة أداة التخصيص المفتوحة (خانة واحدة فقط)
+  const [openCell, setOpenCell] = useState<string | null>(null);
+
   // Toggle row highlight
   const toggleHighlight = (studentId: string | number) => {
     setHighlightedRows(prev => 
@@ -262,6 +267,7 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                       (isHighlighted ? "bg-yellow-100" : (idx % 2 === 0 ? "bg-gray-50" : "bg-white"))
                     }
                   >
+                    {/* عمود التسلسل: كما كان مع ميزة الهايلايت */}
                     <td
                       className="px-1 sm:px-2 py-2 text-center font-semibold text-slate-700 whitespace-nowrap border-b-4 border-slate-300 z-20 cursor-pointer"
                       style={{
@@ -277,6 +283,7 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                     >
                       {student.serial || idx + 1}
                     </td>
+                    {/* عمود الاسم: كما كان */}
                     <td
                       className="px-1 sm:px-2 py-2 sticky right-0 text-right font-semibold text-slate-700 whitespace-nowrap border-b-4 border-slate-300 z-20 text-sm md:text-xs"
                       style={{
@@ -288,24 +295,41 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                     >
                       {student.name}
                     </td>
+                    {/* بقية الأعمدة: ColorfulCell */}
                     {orderedColumns.map((col) => {
                       const value = student.records?.[col.id];
-                      const cellKey = `${student.id}_${col.id}`;
-                      
+                      // لا تطبق ColorfulCell على عمود التسلسل أو الاسم
+                      if (col.id === 'serial' || col.id === 'name') {
+                        return null;
+                      }
+                      const cellId = `${student.id}-${col.id}`;
+                      // Checkbox
                       if (col.type === 'مربع اختيار' || col.type === 'CHECKBOX') {
                         return (
-                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-3 text-center bg-white border-b border-slate-200 cursor-pointer">
+                          <ColorfulCell
+                            key={col.id}
+                            cellId={cellId}
+                            openCell={openCell}
+                            setOpenCell={setOpenCell}
+                          >
                             <input
                               type="checkbox"
                               checked={!!value}
                               onClick={e => e.stopPropagation()}
                               onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.checked)}
                             />
-                          </td>
+                          </ColorfulCell>
                         );
-                      } else if (col.type === 'قائمة' || col.type === 'LIST') {
+                      }
+                      // List/Select
+                      if (col.type === 'قائمة' || col.type === 'LIST') {
                         return (
-                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                          <ColorfulCell
+                            key={col.id}
+                            cellId={cellId}
+                            openCell={openCell}
+                            setOpenCell={setOpenCell}
+                          >
                             <select
                               value={value || ''}
                               onClick={e => e.stopPropagation()}
@@ -317,11 +341,18 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                                 <option key={opt} value={opt}>{opt}</option>
                               ))}
                             </select>
-                          </td>
+                          </ColorfulCell>
                         );
-                      } else if (col.type === 'رقم' || col.type === 'NUMBER') {
+                      }
+                      // Number
+                      if (col.type === 'رقم' || col.type === 'NUMBER') {
                         return (
-                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                          <ColorfulCell
+                            key={col.id}
+                            cellId={cellId}
+                            openCell={openCell}
+                            setOpenCell={setOpenCell}
+                          >
                             <input
                               type="number"
                               value={value !== undefined && value !== null ? value : ''}
@@ -329,11 +360,18 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                               onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value === '' ? null : parseFloat(e.target.value))}
                               className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
                             />
-                          </td>
+                          </ColorfulCell>
                         );
-                      } else if (col.type === 'تاريخ' || col.type === 'DATE') {
+                      }
+                      // Date
+                      if (col.type === 'تاريخ' || col.type === 'DATE') {
                         return (
-                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
+                          <ColorfulCell
+                            key={col.id}
+                            cellId={cellId}
+                            openCell={openCell}
+                            setOpenCell={setOpenCell}
+                          >
                             <input
                               type="date"
                               value={value || ''}
@@ -341,22 +379,28 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                               onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
                               className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
                             />
-                          </td>
-                        );
-                      } else {
-                        return (
-                          <td key={col.id} data-cellid={cellKey} className="text-base px-2 sm:px-4 py-2 text-center cursor-pointer">
-                            <input
-                              type="text"
-                              value={value !== undefined && value !== null ? value : ''}
-                              onClick={e => e.stopPropagation()}
-                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
-                              className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
-                            />
-                          </td>
+                          </ColorfulCell>
                         );
                       }
+                      // Text (افتراضي)
+                      return (
+                        <ColorfulCell
+                          key={col.id}
+                          cellId={cellId}
+                          openCell={openCell}
+                          setOpenCell={setOpenCell}
+                        >
+                          <input
+                            type="text"
+                            value={value !== undefined && value !== null ? value : ''}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value)}
+                            className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                          />
+                        </ColorfulCell>
+                      );
                     })}
+                    {/* عمود الإجراءات كما هو */}
                     <td className="px-2 py-3 text-center text-base bg-slate-50 border-b border-slate-200">
                       <button
                         className="text-red-500 hover:underline text-xs"
