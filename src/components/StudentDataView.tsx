@@ -107,7 +107,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         return style;
       } catch { return ''; }
     }
-    html += '<thead><tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;">${h}</th>`).join('') + '</tr></thead>';
+  html += '<thead><tr>' + tableHeader.map(h => `<th style="background:${pdfColor} !important;color:${getContrastColor(pdfColor)};text-align:center;font-weight:bold;font-family:'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif;">${h}</th>`).join('') + '</tr></thead>';
     html += '<tbody>';
     body.forEach((row, rowIdx) => {
       const student = activeClass.students[rowIdx];
