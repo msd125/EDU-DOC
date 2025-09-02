@@ -290,26 +290,70 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   // تخصيص اسم الكشف والموقعين للإدارة المدرسية
   // قائمة أسماء الكشوف الافتراضية مع إمكانية الإضافة
-  const [reportNames, setReportNames] = useState([
-    'كشف الحضور',
-    'كشف التطوير المهني',
-    'كشف الغياب',
-    'كشف درجات',
-  ]);
+  // قراءة أسماء الكشوف من localStorage إذا وجدت
+  const [reportNames, setReportNames] = useState(() => {
+    try {
+      const stored = localStorage.getItem('adminReportNames');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return [
+      'كشف الحضور',
+      'كشف التطوير المهني',
+      'كشف الغياب',
+      'كشف درجات',
+    ];
+  });
   const [adminReportName, setAdminReportName] = useState(reportNames[0] || '');
   const [newReportName, setNewReportName] = useState('');
 
   // قائمة المناصب الافتراضية مع إمكانية الإضافة
-  const [roles, setRoles] = useState([
-    'عضو لجنة',
-    'مدير المدرسة',
-    'الموجة الطلابي',
-    'وكيل شئون الطلاب',
-    'وكيل شئون المعلمين',
-    'رئيس لجنة',
-    'أخرى...'
-  ]);
-  const [adminSigners, setAdminSigners] = useState([{role: roles[0] || '', name: ''}]);
+  // حفظ واسترجاع قائمة المناصب من localStorage
+  const [roles, setRoles] = useState(() => {
+    try {
+      const stored = localStorage.getItem('adminRoles');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return [
+      'عضو لجنة',
+      'مدير المدرسة',
+      'الموجة الطلابي',
+      'وكيل شئون الطلاب',
+      'وكيل شئون المعلمين',
+      'رئيس لجنة',
+      'أخرى...'
+    ];
+  });
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('adminRoles', JSON.stringify(roles));
+    } catch {}
+  }, [roles]);
+
+  // تهيئة الموقعين بشكل صحيح باستخدام أول عنصر من roles
+  // تهيئة الموقعين بنفس معيار اسم الكشف: قراءة من localStorage أو قيمة افتراضية ثابتة
+  const [adminSigners, setAdminSigners] = useState<{role: string, name: string}[]>(() => {
+    try {
+      const stored = localStorage.getItem('adminSigners');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return [{ role: 'عضو لجنة', name: '' }];
+  });
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('adminReportNames', JSON.stringify(reportNames));
+    } catch {}
+  }, [reportNames]);
+
+  // تحديث localStorage عند أي تغيير في adminSigners (بسيط وواضح)
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('adminSigners', JSON.stringify(adminSigners));
+    } catch {}
+  }, [adminSigners]);
+
+  // مراقبة قيمة الموقعين في كل رندر (للتشخيص)
+  console.log('adminSigners', adminSigners);
   const addAdminSigner = () => setAdminSigners(prev => [...prev, {role: roles[0] || '', name: ''}]);
   const removeAdminSigner = (idx: number) => setAdminSigners(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
   const updateAdminSigner = (idx: number, value: {role: string, name: string}) => setAdminSigners(prev => prev.map((s, i) => i === idx ? value : s));
@@ -323,15 +367,32 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  // مفتاح فريد لكل فصل/مادة
+  const getPageKey = () => {
+    return `currentPage-${activeClass?.id || 'none'}-${activeSubject?.id || 'none'}`;
+  };
+
+  // تهيئة رقم الصفحة من sessionStorage حسب الفصل/المادة
+  const [currentPage, setCurrentPage] = useState(() => {
+    const key = getPageKey();
+    const saved = sessionStorage.getItem(key);
+    return saved ? Number(saved) : 1;
+  });
+
+  // دالة لتغيير الصفحة مع الحفظ في sessionStorage حسب الفصل/المادة
+  const handleSetPage = (page: number) => {
+    setCurrentPage(page);
+    sessionStorage.setItem(getPageKey(), String(page));
+  };
   const [rowsPerPage, setRowsPerPage] = useState(10);
   // حالة للفرز الأبجدي للأسماء
   const [nameSortOrder, setNameSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // إعادة تعيين الصفحة عند تغيير الفصل أو المادة
+  // إعادة تعيين الصفحة عند تغيير الفصل أو المادة (فقط عند تغير المعرفات)
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [activeClass, activeSubject]);
+    sessionStorage.setItem(getPageKey(), '1');
+  }, [activeClass?.id, activeSubject?.id]);
   
   // حالة لنافذة تأكيد حذف جميع الطلاب
   const [isConfirmDeleteAllOpen, setIsConfirmDeleteAllOpen] = useState(false);
@@ -799,7 +860,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                     value={rowsPerPage} 
                     onChange={e => {
                         setRowsPerPage(Number(e.target.value));
-                        setCurrentPage(1); // Reset to first page
+                        handleSetPage(1); // Reset to first page
                     }}
                     className="p-1 border rounded bg-slate-50 focus:ring-1 focus:ring-emerald-500"
                 >
@@ -818,7 +879,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
 
             <div className="flex items-center gap-2">
                 <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => handleSetPage(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1}
                     className="p-2 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="الصفحة السابقة"
@@ -829,7 +890,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                     صفحة {currentPage} من {totalPages || 1}
                 </span>
                 <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() => handleSetPage(Math.min(currentPage + 1, totalPages))}
                     disabled={currentPage >= totalPages || totalStudents === 0}
                     className="p-2 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="الصفحة التالية"

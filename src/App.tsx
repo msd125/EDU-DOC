@@ -467,6 +467,7 @@ const App: React.FC = () => {
   {/* تم حذف جميع أزرار التول بار العلوية بناءً على طلب المستخدم */}
         <div className="w-full overflow-x-auto overflow-y-visible p-2 sm:p-4 md:p-6" style={{marginRight: '0.2cm', minWidth: 0, boxSizing: 'border-box'}}>
           <StudentDataView
+            key={activeClassId + '-' + activeSubjectId}
             ref={studentDataViewRef}
             activeClass={activeClass || undefined}
             activeSubject={activeSubject || undefined}
