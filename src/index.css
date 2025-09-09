@@ -4,6 +4,48 @@
 		display: block !important;
 	}
 }
+
+/* تحسينات مظهر حقل التاريخ */
+.date-input-container {
+	display: inline-flex;
+	align-items: center;
+	position: relative;
+	margin-right: 6px;
+}
+
+.date-input-container input[type="date"] {
+	padding-right: 16px !important;
+}
+
+/* تنسيق الأيقونة المؤشرة للجوال */
+.mobile-indicator {
+	position: absolute !important;
+	top: -3px !important;
+	right: -3px !important;
+	font-size: 10px !important;
+	color: #047857 !important;
+	z-index: 5;
+	background-color: white;
+	border-radius: 50%;
+	width: 14px;
+	height: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 0 0 1px rgba(4, 120, 87, 0.3);
+}
+
+.mobile-indicator svg {
+	stroke: #047857;
+}
+
+/* تحسين مظهر التأكيد على الجوال */
+@media (max-width: 768px) {
+  .date-input-container input[type="date"] {
+    font-size: 14px !important;
+    min-height: 32px;
+  }
+}
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 /* تم حذف استيراد خط Almarai */
 @tailwind base;

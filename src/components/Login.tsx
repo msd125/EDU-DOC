@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PhoneIcon, LockIcon } from './Icons';
+import { FULL_VERSION } from '../utils/version';
 
 interface LoginProps {
   onLogin: (username: string) => void;
@@ -173,6 +174,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 هذه الأداة هدية إلى كل معلم ومعلمة<br />
                 <span className="text-emerald-700/80">تطوير وبرمجة المهندس : محمد بن سالم الدوسري</span><br />
                 <a href="mailto:msaldossary.sa@gmail.com" className="underline hover:text-emerald-600">msaldossary.sa@gmail.com</a>
+                <div className="mt-2 text-xs text-slate-600">الإصدار: {FULL_VERSION}</div>
               </div>
             </form>
           </div>

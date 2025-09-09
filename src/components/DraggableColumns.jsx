@@ -1,6 +1,25 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { getContrastColor } from '../utils/colorUtils';
+
+// دالة للكشف عن الأجهزة المحمولة والآيباد
+function isMobileOrTablet() {
+  // التحقق مما إذا كنا في بيئة المتصفح
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  
+  // طريقة 1: استخدام User-Agent (الأكثر موثوقية)
+  const ua = navigator.userAgent;
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return true;
+  
+  // طريقة 2: استخدام navigator.maxTouchPoints
+  if (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) return true;
+  
+  // طريقة 3: استخدام matchMedia للتحقق من الاستعلامات الخاصة بالأجهزة
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+  
+  // طريقة 4: التحقق من عرض الشاشة (كإجراء احتياطي)
+  return window.innerWidth <= 1024; // الآيباد والأجهزة اللوحية غالباً أقل من هذا العرض
+}
 
 // نوع العنصر للسحب والإفلات
 const ItemTypes = {
@@ -161,27 +180,33 @@ const DraggableHeader = ({
           </div>
         ) : (
           <div className="flex items-center gap-1">
-            <input
-              type={column.type === 'رقم' || column.type === 'NUMBER' ? 'number' : column.type === 'تاريخ' || column.type === 'DATE' ? 'date' : 'text'}
-              className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
-              placeholder="تعميم لكل العمود"
-              onChange={e => {
-                const target = e.target;
-                let value = target.value;
-                if (column.type === 'رقم' || column.type === 'NUMBER') value = value === '' ? null : parseFloat(value);
-                if (column.type === 'تاريخ' || column.type === 'DATE') value = value || null;
-                onFillColumn && onFillColumn(column.id, value);
-              }}
-              style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
-            />
-            {(column.type === 'تاريخ' || column.type === 'DATE') && (
-              <button
-                type="button"
-                className="text-xs text-slate-400 hover:text-red-500 border px-1 rounded ml-1"
-                title="تفريغ الكل"
-                onClick={() => onFillColumn && onFillColumn(column.id, null)}
-              >تفريغ</button>
+            {(column.type === 'تاريخ' || column.type === 'DATE') ? (
+              <>
+                <DateInputWithConfirm 
+                  column={column}
+                  onFillColumn={onFillColumn}
+                />
+              </>
+            ) : (
+              <input
+                type={column.type === 'رقم' || column.type === 'NUMBER' ? 'number' : 'text'}
+                className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="تعميم لكل العمود"
+                onChange={e => {
+                  const target = e.target;
+                  let value = target.value;
+                  if (column.type === 'رقم' || column.type === 'NUMBER') value = value === '' ? null : parseFloat(value);
+                  onFillColumn && onFillColumn(column.id, value);
+                }}
+                style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+              />
             )}
+            <button
+              type="button"
+              className="text-xs text-slate-400 hover:text-red-500 border px-1 rounded ml-1"
+              title="تفريغ الكل"
+              onClick={() => onFillColumn && onFillColumn(column.id, null)}
+            >تفريغ</button>
           </div>
         )}
       </div>
@@ -234,6 +259,149 @@ export const getOrderedColumns = (columns, savedOrder) => {
   });
   
   return orderedColumns;
+};
+
+// مكون خاص بحقل التاريخ مع تأكيد للجوال/الآيباد
+const DateInputWithConfirm = ({ column, onFillColumn }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [inputEnabled, setInputEnabled] = useState(false);
+  const [value, setValue] = useState('');
+  const inputRef = useRef(null);
+  const isMobile = isMobileOrTablet(); // نحفظ النتيجة لنستخدمها في عدة أماكن
+
+  // عند الموافقة
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    setInputEnabled(true);
+    setTimeout(() => {
+      if (inputRef.current) inputRef.current.focus();
+    }, 100);
+    console.log('تم تأكيد تعديل التاريخ');
+  };
+
+  // عند الإلغاء
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setInputEnabled(false);
+    console.log('تم إلغاء تعديل التاريخ');
+  };
+
+  // عند الضغط على الحقل (للجوال/الآيباد)
+  const handleTouch = (e) => {
+    if (isMobile && !inputEnabled) {
+      e.preventDefault();
+      setShowConfirm(true);
+      console.log('تم الضغط على حقل التاريخ في DraggableColumns.jsx - يظهر التأكيد');
+      return false;
+    }
+    console.log('تم الضغط على حقل التاريخ - جهاز عادي أو تم التمكين');
+    return true;
+  };
+
+  // عند تغيير القيمة
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+    onFillColumn && onFillColumn(column.id, newValue || null);
+  };
+
+  // نضيف علامة للإشارة إلى أن الحقل يتطلب تأكيدًا على الأجهزة المحمولة
+  const mobileIndicator = isMobile ? (
+    <span className="mobile-indicator" title="يتطلب تأكيد على الأجهزة المحمولة">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+        <path d="M12 18h.01" />
+      </svg>
+    </span>
+  ) : null;
+
+  return (
+    <div style={{ position: 'relative' }} className="date-input-container">
+      {mobileIndicator}
+      <input
+        ref={inputRef}
+        type="date"
+        className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+        placeholder="تعميم لكل العمود"
+        style={{ 
+          fontSize: 10, 
+          minWidth: 0, 
+          maxWidth: 120,
+          backgroundColor: isMobile && !inputEnabled ? '#f8f8f8' : '#fff' // نغير لون الخلفية للإشارة
+        }}
+        value={value}
+        readOnly={isMobile && !inputEnabled}
+        onTouchStart={handleTouch}
+        onMouseDown={handleTouch}
+        onChange={handleChange}
+      />
+
+      {/* رسالة تأكيد للجوال/الآيباد */}
+      {showConfirm && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          width: '100vw', 
+          height: '100vh', 
+          background: 'rgba(0,0,0,0.7)', 
+          zIndex: 9999, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          direction: 'rtl'
+        }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: 24, 
+            minWidth: 280, 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)', 
+            textAlign: 'center' 
+          }}>
+            <div style={{ marginBottom: 16, fontWeight: 600, fontSize: 18, color: '#059669' }}>
+              تأكيد تعديل التاريخ
+            </div>
+            <div style={{ marginBottom: 20, fontSize: 16, color: '#4b5563' }}>
+              هل تريد تعديل التاريخ لهذا العمود؟
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+              <button 
+                onClick={handleConfirm} 
+                style={{ 
+                  background: '#059669', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: 4, 
+                  padding: '10px 20px', 
+                  fontWeight: 600, 
+                  fontSize: 16, 
+                  cursor: 'pointer' 
+                }}
+              >
+                نعم
+              </button>
+              <button 
+                onClick={handleCancel} 
+                style={{ 
+                  background: '#e5e7eb', 
+                  color: '#222', 
+                  border: 'none', 
+                  borderRadius: 4, 
+                  padding: '10px 20px', 
+                  fontWeight: 600, 
+                  fontSize: 16, 
+                  cursor: 'pointer' 
+                }}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // المكون الرئيسي للأعمدة القابلة للسحب

@@ -2,20 +2,20 @@ import React, { useState, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { getContrastColor } from '../utils/colorUtils';
 
-// دالة للكشف عن الأجهزة المحمولة والآيباد
+// دالة للكشف عن الأجهزة المحمولة والآيباد - تم تحديثها
 function isMobileOrTablet() {
   // التحقق مما إذا كنا في بيئة المتصفح
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
   
-  // طريقة 1: استخدام واجهة navigator.maxTouchPoints (أكثر موثوقية في المتصفحات الحديثة)
-  if (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) return true;
-  
-  // طريقة 2: استخدام matchMedia للتحقق من الاستعلامات الخاصة بالأجهزة (أكثر دقة للجوال)
-  if (window.matchMedia('(pointer: coarse)').matches) return true;
-  
-  // طريقة 3: استخدام User-Agent (طريقة تقليدية)
+  // طريقة 3: استخدام User-Agent (طريقة تقليدية) - نبدأ بها لأنها الأكثر موثوقية
   const ua = navigator.userAgent;
   if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return true;
+  
+  // طريقة 1: استخدام واجهة navigator.maxTouchPoints
+  if (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) return true;
+  
+  // طريقة 2: استخدام matchMedia للتحقق من الاستعلامات الخاصة بالأجهزة
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
   
   // طريقة 4: التحقق من عرض الشاشة (كإجراء احتياطي)
   return window.innerWidth <= 1024; // الآيباد والأجهزة اللوحية غالباً أقل من هذا العرض
@@ -197,14 +197,12 @@ const DraggableHeader = ({
                 style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
               />
             )}
-            {(column.type === 'تاريخ' || column.type === 'DATE') && (
-              <button
-                type="button"
-                className="text-xs text-slate-400 hover:text-red-500 border px-1 rounded ml-1"
-                title="تفريغ الكل"
-                onClick={() => onFillColumn && onFillColumn(column.id, null)}
-              >تفريغ</button>
-            )}
+            <button
+              type="button"
+              className="text-xs text-slate-400 hover:text-red-500 border px-1 rounded ml-1"
+              title="تفريغ الكل"
+              onClick={() => onFillColumn && onFillColumn(column.id, null)}
+            >تفريغ</button>
           </div>
         )}
       </div>
@@ -212,12 +210,13 @@ const DraggableHeader = ({
   );
 };
 
-// مكون خاص بحقل التاريخ مع تأكيد للجوال/الآيباد
+// مكون خاص بحقل التاريخ مع تأكيد للجوال/الآيباد - تم تحديثه
 const DateInputWithConfirm = ({ column, onFillColumn }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [inputEnabled, setInputEnabled] = useState(false);
   const [value, setValue] = useState('');
   const inputRef = useRef(null);
+  const isMobile = isMobileOrTablet(); // نحفظ النتيجة لنستخدمها في عدة أماكن
 
   // عند الموافقة
   const handleConfirm = () => {
@@ -236,11 +235,14 @@ const DateInputWithConfirm = ({ column, onFillColumn }) => {
 
   // عند الضغط على الحقل (للجوال/الآيباد)
   const handleTouch = (e) => {
-    if (isMobileOrTablet() && !inputEnabled) {
+    if (isMobile && !inputEnabled) {
       e.preventDefault();
       setShowConfirm(true);
+      // نضع رسالة في وحدة التحكم لتأكيد أن الكود يعمل
+      console.log('تم الضغط على حقل التاريخ - يظهر التأكيد');
       return false;
     }
+    console.log('تم الضغط على حقل التاريخ - جهاز عادي أو تم التمكين');
     return true;
   };
 
@@ -251,16 +253,32 @@ const DateInputWithConfirm = ({ column, onFillColumn }) => {
     onFillColumn && onFillColumn(column.id, newValue || null);
   };
 
+  // نضيف علامة للإشارة إلى أن الحقل يتطلب تأكيدًا على الأجهزة المحمولة
+  const mobileIndicator = isMobile ? (
+    <span className="mobile-indicator" title="يتطلب تأكيد على الأجهزة المحمولة">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+        <path d="M12 18h.01" />
+      </svg>
+    </span>
+  ) : null;
+
   return (
-    <>
+    <div style={{ position: 'relative' }} className="date-input-container">
+      {mobileIndicator}
       <input
         ref={inputRef}
         type="date"
         className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
         placeholder="تعميم لكل العمود"
-        style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+        style={{ 
+          fontSize: 10, 
+          minWidth: 0, 
+          maxWidth: 120,
+          backgroundColor: isMobile && !inputEnabled ? '#f8f8f8' : '#fff' // نغير لون الخلفية للإشارة
+        }}
         value={value}
-        readOnly={isMobileOrTablet() && !inputEnabled}
+        readOnly={isMobile && !inputEnabled}
         onTouchStart={handleTouch}
         onMouseDown={handleTouch}
         onChange={handleChange}
@@ -268,16 +286,69 @@ const DateInputWithConfirm = ({ column, onFillColumn }) => {
 
       {/* رسالة تأكيد للجوال/الآيباد */}
       {showConfirm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', borderRadius: 8, padding: 24, minWidth: 220, boxShadow: '0 2px 16px #0002', textAlign: 'center' }}>
-            <div style={{ marginBottom: 16, fontWeight: 600 }}>تأكيد تعديل التاريخ</div>
-            <div style={{ marginBottom: 20, fontSize: 14 }}>هل تريد تعديل التاريخ لهذا العمود؟</div>
-            <button onClick={handleConfirm} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', marginRight: 8, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>نعم</button>
-            <button onClick={handleCancel} style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 4, padding: '8px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>إلغاء</button>
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          width: '100vw', 
+          height: '100vh', 
+          background: 'rgba(0,0,0,0.7)', 
+          zIndex: 9999, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          direction: 'rtl'
+        }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: 24, 
+            minWidth: 280, 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)', 
+            textAlign: 'center' 
+          }}>
+            <div style={{ marginBottom: 16, fontWeight: 600, fontSize: 18, color: '#059669' }}>
+              تأكيد تعديل التاريخ
+            </div>
+            <div style={{ marginBottom: 20, fontSize: 16, color: '#4b5563' }}>
+              هل تريد تعديل التاريخ لهذا العمود؟
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+              <button 
+                onClick={handleConfirm} 
+                style={{ 
+                  background: '#059669', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: 4, 
+                  padding: '10px 20px', 
+                  fontWeight: 600, 
+                  fontSize: 16, 
+                  cursor: 'pointer' 
+                }}
+              >
+                نعم
+              </button>
+              <button 
+                onClick={handleCancel} 
+                style={{ 
+                  background: '#e5e7eb', 
+                  color: '#222', 
+                  border: 'none', 
+                  borderRadius: 4, 
+                  padding: '10px 20px', 
+                  fontWeight: 600, 
+                  fontSize: 16, 
+                  cursor: 'pointer' 
+                }}
+              >
+                إلغاء
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
