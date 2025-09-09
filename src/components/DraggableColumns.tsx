@@ -1,115 +1,690 @@
-import React, { useState, useCallback } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { getContrastColor } from '../utils/colorUtils';
+import React, { useState, useRef } from 'react';
+import { Draggable, Droppable } from 'react-beautiful-dnd';
+import { format } from 'date-fns';
+import ConfirmModal from './ConfirmModal';
+import { Column, ColumnType } from '../types';
 
-// تعريف أنواع البيانات
-interface ColumnType {
-  id: string | number;
-  name: string;
-  type?: string;
-  options?: string[];
+function isMobileOrTablet() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
 }
 
 interface TableColumnHeaderProps {
-  column: ColumnType;
+  column: Column;
   index: number;
-  themeColor?: string;
-  onEditColumn: (id: string | number) => void;
-  onDeleteColumn: (id: string | number, name: string) => void;
-  onFillColumn?: (id: string | number, value: any) => void;
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
 }
 
-// مكون لعنوان العمود القابل للسحب
-const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({
-  column,
-  index,
-  themeColor,
-  onEditColumn,
-  onDeleteColumn,
-  onFillColumn
-}) => {
+const DateHeaderInputForColumn: React.FC<{
+  column: Column;
+  onDateChange: (columnId: string, newDate: string) => void;
+}> = ({ column, onDateChange }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDateInput, setShowDateInput] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateClick = () => {
+    if (isMobileOrTablet()) {
+      setShowConfirm(true);
+    } else {
+      setShowDateInput(true);
+      setTimeout(() => {
+        inputRef.current?.showPicker?.();
+      }, 0);
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    setShowDateInput(true);
+    setTimeout(() => {
+      inputRef.current?.showPicker?.();
+    }, 0);
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setShowDateInput(false);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onDateChange(String(column.id), e.target.value);
+    setShowDateInput(false);
+  };
+
+  return (
+    <>
+      <span
+        style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'underline' }}
+        onClick={handleDateClick}
+        tabIndex={0}
+        role="button"
+        aria-label="Edit date"
+      >
+        {'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : 'تاريخ'}
+      </span>
+      {showDateInput && (
+        <input
+          ref={inputRef}
+          type="date"
+          value={'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : ''}
+          onChange={handleDateChange}
+          onBlur={() => setShowDateInput(false)}
+          style={{ marginLeft: 8 }}
+          autoFocus
+        />
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          message="هل أنت متأكد أنك تريد تعديل التاريخ لهذا العمود؟"
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          confirmLabel="تأكيد التعديل"
+        />
+      )}
+    </>
+  );
+};
+
+const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({ column, index, onDateChange, onTitleChange }) => {
   return (
     <Draggable draggableId={String(column.id)} index={index}>
-      {(provided, snapshot) => (
-        <th 
+      {(provided) => (
+        <th
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`px-1 sm:px-2 py-2 min-w-[80px] md:min-w-[120px] max-w-[180px] text-center align-top border-slate-200 border-l last:border-l-0 group relative text-xs font-bold ${
-            snapshot.isDragging ? 'opacity-80 shadow-xl !bg-green-50' : ''
-          }`}
           style={{
             ...provided.draggableProps.style,
-            fontFamily: 'Noto Sans Arabic, sans-serif',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            color: getContrastColor(themeColor)
+            background: '#f8f9fa',
+            padding: '8px',
+            minWidth: 120,
+            border: '1px solid #dee2e6',
+            textAlign: 'center',
           }}
         >
-          <div className="flex flex-col items-center gap-0.5 w-full">
-            <div className="flex items-center justify-center mb-1">
-              <span className="font-semibold text-xs break-words w-full" title={column.name}>
-                {column.name}
-              </span>
-              {/* أيقونة صغيرة تشير إلى إمكانية السحب */}
-              <span className="cursor-grab ml-1 opacity-40 hover:opacity-100" title="اسحب لتغيير موقع العمود">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-              </span>
-            </div>
+          {column.type === ColumnType.DATE ? (
+            <DateHeaderInputForColumn column={column} onDateChange={onDateChange} />
+          ) : (
+            <input
+              type="text"
+              value={column.name}
+              onChange={(e) => onTitleChange(String(column.id), e.target.value)}
+              style={{
+                width: '90%',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'center',
+                fontWeight: 'bold',
+              }}
+              aria-label="Edit column title"
+            />
+          )}
+        </th>
+      )}
+    </Draggable>
+  );
+};
 
-            <div className="flex gap-4 justify-center items-center mt-1">
-              <button
-                className="inline-flex items-center justify-center ms-1 text-lg opacity-90 transition-all duration-150 p-2 rounded-full icon-hover"
-                title="تعديل اسم العمود"
-                aria-label="تعديل اسم العمود"
-                onClick={() => onEditColumn(column.id)}
-                style={{ verticalAlign: 'middle', minWidth: 36, minHeight: 36, color: getContrastColor(themeColor), background: 'transparent' }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </button>
-              <button
-                className="inline-flex items-center justify-center ms-1 text-lg opacity-90 transition-all duration-150 p-2 rounded-full icon-hover"
-                title="حذف العمود"
-                aria-label="حذف العمود"
-                onClick={() => onDeleteColumn(column.id, column.name)}
-                style={{ verticalAlign: 'middle', minWidth: 36, minHeight: 36, color: getContrastColor(themeColor), background: 'transparent' }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-              </button>
-            </div>
+interface DraggableColumnsProps {
+  columns: Column[];
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+  onDragEnd: (result: any) => void;
+}
 
-            {/* تعميم القيم حسب نوع العمود */}
-            {column.type === 'قائمة' || column.type === 'LIST' ? (
-              <select
-                className="w-full mt-1 p-1 text-xs text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
-                defaultValue=""
-                onChange={e => {
-                  const value = e.target.value;
-                  if (value === '__empty__') {
-                    onFillColumn && onFillColumn(column.id, null);
-                    e.target.selectedIndex = 0;
-                  } else if (value !== '') {
-                    onFillColumn && onFillColumn(column.id, value);
-                    e.target.selectedIndex = 0;
-                  }
-                }}
-                style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
-              >
-                <option value="">تعميم لكل العمود...</option>
-                <option value="__empty__">بدون قيمة (تفريغ)</option>
-                {(column.options || []).map((opt: string) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            ) : column.type === 'مربع اختيار' || column.type === 'CHECKBOX' ? (
-              <div className="flex gap-1 mt-1 justify-center items-center">
+const DraggableColumns: React.FC<DraggableColumnsProps> = ({ columns, onDateChange, onTitleChange, onDragEnd }) => {
+  return (
+    <Droppable droppableId="columns" direction="horizontal">
+      {(provided) => (
+        <tr ref={provided.innerRef} {...provided.droppableProps}>
+          {columns.map((column, index) => (
+            <TableColumnHeader
+              key={column.id}
+              column={column}
+              index={index}
+              onDateChange={onDateChange}
+              onTitleChange={onTitleChange}
+            />
+          ))}
+          {provided.placeholder}
+        </tr>
+      )}
+    </Droppable>
+  );
+};
+
+export default DraggableColumns;
+export default DraggableColumns;
+import React, { useState, useRef } from 'react';
+import { Draggable, Droppable } from 'react-beautiful-dnd';
+import { format } from 'date-fns';
+import ConfirmModal from './ConfirmModal';
+import { Column, ColumnType } from '../types';
+
+function isMobileOrTablet() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+}
+
+interface TableColumnHeaderProps {
+  column: Column;
+  index: number;
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+}
+
+const DateHeaderInputForColumn: React.FC<{
+  column: Column;
+  onDateChange: (columnId: string, newDate: string) => void;
+}> = ({ column, onDateChange }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDateInput, setShowDateInput] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateClick = () => {
+    if (isMobileOrTablet()) {
+      setShowConfirm(true);
+    } else {
+      setShowDateInput(true);
+      setTimeout(() => {
+        inputRef.current?.showPicker?.();
+      }, 0);
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    setShowDateInput(true);
+    setTimeout(() => {
+      inputRef.current?.showPicker?.();
+    }, 0);
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setShowDateInput(false);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onDateChange(String(column.id), e.target.value);
+    setShowDateInput(false);
+  };
+
+  return (
+    <>
+      <span
+        style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'underline' }}
+        onClick={handleDateClick}
+        tabIndex={0}
+        role="button"
+        aria-label="Edit date"
+      >
+        {'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : 'تاريخ'}
+      </span>
+      {showDateInput && (
+        <input
+          ref={inputRef}
+          type="date"
+          value={'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : ''}
+          onChange={handleDateChange}
+          onBlur={() => setShowDateInput(false)}
+          style={{ marginLeft: 8 }}
+          autoFocus
+        />
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          message="هل أنت متأكد أنك تريد تعديل التاريخ لهذا العمود؟"
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          confirmLabel="تأكيد التعديل"
+        />
+      )}
+    </>
+  );
+};
+
+const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({ column, index, onDateChange, onTitleChange }) => {
+  return (
+    <Draggable draggableId={String(column.id)} index={index}>
+      {(provided) => (
+        <th
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          style={{
+            ...provided.draggableProps.style,
+            background: '#f8f9fa',
+            padding: '8px',
+            minWidth: 120,
+            border: '1px solid #dee2e6',
+            textAlign: 'center',
+          }}
+        >
+          {column.type === ColumnType.DATE ? (
+            <DateHeaderInputForColumn column={column} onDateChange={onDateChange} />
+          ) : (
+            <input
+              type="text"
+              value={column.name}
+              onChange={(e) => onTitleChange(String(column.id), e.target.value)}
+              style={{
+                width: '90%',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'center',
+                fontWeight: 'bold',
+              }}
+              aria-label="Edit column title"
+            />
+          )}
+        </th>
+      )}
+    </Draggable>
+  );
+};
+
+interface DraggableColumnsProps {
+  columns: Column[];
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+  onDragEnd: (result: any) => void;
+}
+
+const DraggableColumns: React.FC<DraggableColumnsProps> = ({ columns, onDateChange, onTitleChange, onDragEnd }) => {
+  return (
+    <Droppable droppableId="columns" direction="horizontal">
+      {(provided) => (
+        <tr ref={provided.innerRef} {...provided.droppableProps}>
+          {columns.map((column, index) => (
+            <TableColumnHeader
+              key={column.id}
+              column={column}
+              index={index}
+              onDateChange={onDateChange}
+              onTitleChange={onTitleChange}
+            />
+          ))}
+          {provided.placeholder}
+        </tr>
+      )}
+    </Droppable>
+  );
+};
+
+export default DraggableColumns;
+export default DraggableColumns;
+import React, { useState, useRef } from 'react';
+import { Draggable, Droppable } from 'react-beautiful-dnd';
+import { format } from 'date-fns';
+import ConfirmModal from './ConfirmModal';
+import { Column, ColumnType } from '../types';
+
+function isMobileOrTablet() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+}
+
+interface TableColumnHeaderProps {
+  column: Column;
+  index: number;
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+}
+
+const DateHeaderInputForColumn: React.FC<{
+  column: Column;
+  onDateChange: (columnId: string, newDate: string) => void;
+}> = ({ column, onDateChange }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDateInput, setShowDateInput] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateClick = () => {
+    if (isMobileOrTablet()) {
+      setShowConfirm(true);
+    } else {
+      setShowDateInput(true);
+      setTimeout(() => {
+        inputRef.current?.showPicker?.();
+      }, 0);
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    setShowDateInput(true);
+    setTimeout(() => {
+      inputRef.current?.showPicker?.();
+    }, 0);
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setShowDateInput(false);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onDateChange(String(column.id), e.target.value);
+    setShowDateInput(false);
+  };
+
+  return (
+    <>
+      <span
+        style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'underline' }}
+        onClick={handleDateClick}
+        tabIndex={0}
+        role="button"
+        aria-label="Edit date"
+      >
+        {'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : 'تاريخ'}
+      </span>
+      {showDateInput && (
+        <input
+          ref={inputRef}
+          type="date"
+          value={'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : ''}
+          onChange={handleDateChange}
+          onBlur={() => setShowDateInput(false)}
+          style={{ marginLeft: 8 }}
+          autoFocus
+        />
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          message="هل أنت متأكد أنك تريد تعديل التاريخ لهذا العمود؟"
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          confirmLabel="تأكيد التعديل"
+        />
+      )}
+    </>
+  );
+};
+
+const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({ column, index, onDateChange, onTitleChange }) => {
+  return (
+    <Draggable draggableId={String(column.id)} index={index}>
+      {(provided) => (
+        <th
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          style={{
+            ...provided.draggableProps.style,
+            background: '#f8f9fa',
+            padding: '8px',
+            minWidth: 120,
+            border: '1px solid #dee2e6',
+            textAlign: 'center',
+          }}
+        >
+          {column.type === ColumnType.DATE ? (
+            <DateHeaderInputForColumn column={column} onDateChange={onDateChange} />
+          ) : (
+            <input
+              type="text"
+              value={column.name}
+              onChange={(e) => onTitleChange(String(column.id), e.target.value)}
+              style={{
+                width: '90%',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'center',
+                fontWeight: 'bold',
+              }}
+              aria-label="Edit column title"
+            />
+          )}
+        </th>
+      )}
+    </Draggable>
+  );
+};
+
+interface DraggableColumnsProps {
+  columns: Column[];
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+  onDragEnd: (result: any) => void;
+}
+
+const DraggableColumns: React.FC<DraggableColumnsProps> = ({ columns, onDateChange, onTitleChange, onDragEnd }) => {
+  return (
+    <Droppable droppableId="columns" direction="horizontal">
+      {(provided) => (
+        <tr ref={provided.innerRef} {...provided.droppableProps}>
+          {columns.map((column, index) => (
+            <TableColumnHeader
+              key={column.id}
+              column={column}
+              index={index}
+              onDateChange={onDateChange}
+              onTitleChange={onTitleChange}
+            />
+          ))}
+          {provided.placeholder}
+        </tr>
+      )}
+    </Droppable>
+  );
+};
+
+export default DraggableColumns;
+export default DraggableColumns;
+import React, { useState, useRef } from 'react';
+import { Draggable, Droppable } from 'react-beautiful-dnd';
+import { format } from 'date-fns';
+import ConfirmModal from './ConfirmModal';
+import { Column, ColumnType } from '../types';
+
+function isMobileOrTablet() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+}
+
+interface TableColumnHeaderProps {
+  column: Column;
+  index: number;
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+}
+
+const DateHeaderInputForColumn: React.FC<{
+  column: Column;
+  onDateChange: (columnId: string, newDate: string) => void;
+}> = ({ column, onDateChange }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDateInput, setShowDateInput] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateClick = () => {
+    if (isMobileOrTablet()) {
+      setShowConfirm(true);
+    } else {
+      setShowDateInput(true);
+      setTimeout(() => {
+        inputRef.current?.showPicker?.();
+      }, 0);
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    setShowDateInput(true);
+    setTimeout(() => {
+      inputRef.current?.showPicker?.();
+    }, 0);
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setShowDateInput(false);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onDateChange(String(column.id), e.target.value);
+    setShowDateInput(false);
+  };
+
+  return (
+    <>
+      <span
+        style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'underline' }}
+        onClick={handleDateClick}
+        tabIndex={0}
+        role="button"
+        aria-label="Edit date"
+      >
+        {'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : 'تاريخ'}
+      </span>
+      {showDateInput && (
+        <input
+          ref={inputRef}
+          type="date"
+          value={'date' in column && (column as any).date ? format(new Date((column as any).date), 'yyyy-MM-dd') : ''}
+          onChange={handleDateChange}
+          onBlur={() => setShowDateInput(false)}
+          style={{ marginLeft: 8 }}
+          autoFocus
+        />
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          message="هل أنت متأكد أنك تريد تعديل التاريخ لهذا العمود؟"
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          confirmLabel="تأكيد التعديل"
+        />
+      )}
+    </>
+  );
+};
+
+const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({ column, index, onDateChange, onTitleChange }) => {
+  return (
+    <Draggable draggableId={String(column.id)} index={index}>
+      {(provided) => (
+        <th
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          style={{
+            ...provided.draggableProps.style,
+            background: '#f8f9fa',
+            padding: '8px',
+            minWidth: 120,
+            border: '1px solid #dee2e6',
+            textAlign: 'center',
+          }}
+        >
+          {column.type === ColumnType.DATE ? (
+            <DateHeaderInputForColumn column={column} onDateChange={onDateChange} />
+          ) : (
+            <input
+              type="text"
+              value={column.name}
+              onChange={(e) => onTitleChange(String(column.id), e.target.value)}
+              style={{
+                width: '90%',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'center',
+                fontWeight: 'bold',
+              }}
+              aria-label="Edit column title"
+            />
+          )}
+        </th>
+      )}
+    </Draggable>
+  );
+};
+
+interface DraggableColumnsProps {
+  columns: Column[];
+  onDateChange: (columnId: string, newDate: string) => void;
+  onTitleChange: (columnId: string, newTitle: string) => void;
+  onDragEnd: (result: any) => void;
+}
+
+const DraggableColumns: React.FC<DraggableColumnsProps> = ({ columns, onDateChange, onTitleChange, onDragEnd }) => {
+  return (
+    <Droppable droppableId="columns" direction="horizontal">
+      {(provided) => (
+        <tr ref={provided.innerRef} {...provided.droppableProps}>
+          {columns.map((column, index) => (
+            <TableColumnHeader
+              key={column.id}
+              column={column}
+              index={index}
+              onDateChange={onDateChange}
+              onTitleChange={onTitleChange}
+            />
+          ))}
+          {provided.placeholder}
+        </tr>
+      )}
+    </Droppable>
+  );
+};
+
+export default DraggableColumns;
+        <th>
+          {/* تعميم القيم حسب نوع العمود */}
+          {(() => {
+            if (column.type === 'قائمة' || column.type === 'LIST') {
+              return (
+                <select
+                  className="w-full mt-1 p-1 text-xs text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+                  defaultValue=""
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value === '__empty__') {
+                      onFillColumn && onFillColumn(column.id, null);
+                      e.target.selectedIndex = 0;
+                    } else if (value !== '') {
+                      onFillColumn && onFillColumn(column.id, value);
+                      e.target.selectedIndex = 0;
+                    }
+                  }}
+                  style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+                >
+                  <option value="">تعميم لكل العمود...</option>
+                  <option value="__empty__">بدون قيمة (تفريغ)</option>
+                  {(column.options || []).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              );
+            }
+            if (column.type === 'مربع اختيار' || column.type === 'CHECKBOX') {
+              return (
+                <div className="flex gap-1 mt-1 justify-center items-center">
+                  <input
+                    type="checkbox"
+                    onChange={e => onFillColumn && onFillColumn(column.id, e.target.checked)}
+                    title="تعميم تفعيل/إلغاء الكل"
+                    className="w-5 h-5 sm:w-6 sm:h-6 accent-emerald-600"
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-slate-400 hover:text-red-500 border px-1 rounded ml-1"
+                    title="تفريغ الكل"
+                    onClick={() => onFillColumn && onFillColumn(column.id, null)}
+                  >تفريغ</button>
+                </div>
+              );
+            }
+            return <DateHeaderInputForColumn column={column} onFillColumn={onFillColumn} />;
+          })()}
                 <input
                   type="checkbox"
                   onChange={e => onFillColumn && onFillColumn(column.id, e.target.checked)}
@@ -124,21 +699,166 @@ const TableColumnHeader: React.FC<TableColumnHeaderProps> = ({
                 >تفريغ</button>
               </div>
             ) : (
-              <div className="flex items-center gap-1">
-                <input
-                  type={column.type === 'رقم' || column.type === 'NUMBER' ? 'number' : column.type === 'تاريخ' || column.type === 'DATE' ? 'date' : 'text'}
-                  className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="تعميم لكل العمود"
-                  onChange={e => {
-                    const target = e.target as HTMLInputElement;
-                    let value: any = target.value;
-                    if (column.type === 'رقم' || column.type === 'NUMBER') value = value === '' ? null : parseFloat(value);
-                    if (column.type === 'تاريخ' || column.type === 'DATE') value = value || null;
-                    onFillColumn && onFillColumn(column.id, value);
-                  }}
-                  style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
-                />
-              </div>
+              <DateHeaderInputForColumn column={column} onFillColumn={onFillColumn} />
+            )}
+          </div>
+        </th>
+      )}
+    </Draggable>
+  );
+};
+
+// مكون خاص بحقل التاريخ في الهيدر مع حماية للجوال/الآيباد
+const DateHeaderInputForColumn: React.FC<{ column: ColumnType, onFillColumn?: (id: string | number, value: any) => void }> = ({ column, onFillColumn }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [inputEnabled, setInputEnabled] = useState(false);
+  const [value, setValue] = useState<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // عند الموافقة
+  const handleConfirm = () => {
+    return (
+      <Draggable draggableId={String(column.id)} index={index}>
+        {(provided, snapshot) => (
+          <th ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+            <React.Fragment>
+              {/* تعميم القيم حسب نوع العمود */}
+              {(() => {
+                if (column.type === 'قائمة' || column.type === 'LIST') {
+                  return (
+                    <select
+                      className="w-full mt-1 p-1 text-xs text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+                      defaultValue=""
+                      onChange={e => {
+                        const value = e.target.value;
+                        if (value === '__empty__') {
+                          onFillColumn && onFillColumn(column.id, null);
+                          e.target.selectedIndex = 0;
+                        } else if (value !== '') {
+                          onFillColumn && onFillColumn(column.id, value);
+                          e.target.selectedIndex = 0;
+                        }
+                      }}
+                      style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+                    >
+                      <option value="">تعميم لكل العمود...</option>
+                      <option value="__empty__">بدون قيمة (تفريغ)</option>
+                      {(column.options || []).map((opt: string) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  );
+                }
+                if (column.type === 'مربع اختيار' || column.type === 'CHECKBOX') {
+                  return (
+                    <div className="flex gap-1 mt-1 justify-center items-center">
+                      <input
+                        type="checkbox"
+                        onChange={e => onFillColumn && onFillColumn(column.id, e.target.checked)}
+                        title="تعميم تفعيل/إلغاء الكل"
+                        className="w-5 h-5 sm:w-6 sm:h-6 accent-emerald-600"
+                      />
+                      <button
+                        type="button"
+                        className="text-xs text-slate-400 hover:text-red-500 border px-1 rounded ml-1"
+                        title="تفريغ الكل"
+                        onClick={() => onFillColumn && onFillColumn(column.id, null)}
+                      >تفريغ</button>
+                    </div>
+                  );
+                }
+                if (column.type === 'تاريخ' || column.type === 'DATE') {
+                  return <DateHeaderInputForColumn column={column} onFillColumn={onFillColumn} />;
+                }
+                // رقم أو نص
+                return (
+                  <input
+                    type={column.type === 'رقم' || column.type === 'NUMBER' ? 'number' : 'text'}
+                    className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="تعميم لكل العمود"
+                    onChange={e => {
+                      const target = e.target as HTMLInputElement;
+                      let value: any = target.value;
+                      if (column.type === 'رقم' || column.type === 'NUMBER') value = value === '' ? null : parseFloat(value);
+                      onFillColumn && onFillColumn(column.id, value);
+                    }}
+                    style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+                  />
+                );
+              })()}
+            </React.Fragment>
+          </th>
+        )}
+      </Draggable>
+    );
+  );
+};
+// مكون خاص بحقل التاريخ في الهيدر مع حماية للجوال/الآيباد
+const DateHeaderInputForColumn: React.FC<{ column: ColumnType, onFillColumn?: (id: string | number, value: any) => void }> = ({ column, onFillColumn }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [inputEnabled, setInputEnabled] = useState(false);
+  const [value, setValue] = useState<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // عند الموافقة
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    setInputEnabled(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  };
+
+  // عند الإلغاء
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setInputEnabled(false);
+  };
+
+  // عند الضغط على الحقل في الجوال/الآيباد
+  const handleTouch = (e: React.TouchEvent | React.MouseEvent) => {
+    if (isMobileDevice() && !inputEnabled) {
+      e.preventDefault();
+      setShowConfirm(true);
+    }
+  };
+
+  // عند تغيير القيمة
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+    let v: any = e.target.value;
+    if (column.type === 'رقم' || column.type === 'NUMBER') v = v === '' ? null : parseFloat(v);
+    if (column.type === 'تاريخ' || column.type === 'DATE') v = v || null;
+    onFillColumn && onFillColumn(column.id, v);
+  };
+
+  return (
+    <>
+      <input
+        type={column.type === 'رقم' || column.type === 'NUMBER' ? 'number' : column.type === 'تاريخ' || column.type === 'DATE' ? 'date' : 'text'}
+        className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
+        placeholder="تعميم لكل العمود"
+        style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
+        ref={inputRef}
+        readOnly={isMobileDevice() && !inputEnabled}
+        onTouchStart={handleTouch}
+        onMouseDown={handleTouch}
+        value={value}
+        onChange={handleChange}
+      />
+      {showConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 8, padding: 24, minWidth: 220, boxShadow: '0 2px 16px #0002', textAlign: 'center' }}>
+            <div style={{ marginBottom: 16, fontWeight: 600 }}>تأكيد تعديل التاريخ</div>
+            <div style={{ marginBottom: 20, fontSize: 14 }}>هل تريد تعديل التاريخ لهذا العمود؟</div>
+            <button onClick={handleConfirm} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', marginRight: 8, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>نعم</button>
+            <button onClick={handleCancel} style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 4, padding: '8px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>إلغاء</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
             )}
           </div>
         </th>
