@@ -1,4 +1,5 @@
 import React from 'react';
+import DateHeaderInput from './DateHeaderInput';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { getContrastColor } from './StudentTable';
 
@@ -108,12 +109,7 @@ const DraggableHeaders: React.FC<DraggableHeadersProps> = ({
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <input
-                            type={col.type === 'رقم' || col.type === 'NUMBER' ? 'number' : col.type === 'تاريخ' || col.type === 'DATE' ? 'date' : 'text'}
-                            className="w-full mt-1 p-1 text-xs sm:text-sm text-center rounded bg-white text-slate-700 border border-slate-300 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="تعميم لكل العمود"
-                            style={{ fontSize: 10, minWidth: 0, maxWidth: 120 }}
-                          />
+                          <DateHeaderInput col={col} />
                         </div>
                       )}
                     </div>
