@@ -5,10 +5,21 @@ import ConfirmModal from './ConfirmModal';
 import { Column, ColumnType } from '../types';
 
 function isMobileOrTablet() {
-  if (typeof navigator === 'undefined') return false;
+  // التحقق مما إذا كنا في بيئة المتصفح
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  
+  // طريقة 1: استخدام واجهة navigator.maxTouchPoints (أكثر موثوقية في المتصفحات الحديثة)
+  if (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) return true;
+  
+  // طريقة 2: استخدام matchMedia للتحقق من الاستعلامات الخاصة بالأجهزة (أكثر دقة للجوال)
+  if (window.matchMedia('(pointer: coarse)').matches) return true;
+  
+  // طريقة 3: استخدام User-Agent (طريقة تقليدية)
   const ua = navigator.userAgent;
-  // فقط الجوالات والآيباد الحقيقية
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return true;
+  
+  // طريقة 4: التحقق من عرض الشاشة (كإجراء احتياطي)
+  return window.innerWidth <= 1024; // الآيباد والأجهزة اللوحية غالباً أقل من هذا العرض
 }
 
 interface TableColumnHeaderProps {
