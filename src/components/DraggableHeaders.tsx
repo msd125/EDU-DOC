@@ -16,6 +16,7 @@ interface DraggableHeadersProps {
   onEditColumn: (col: ColumnType) => void;
   onDeleteColumn: (id: string | number, name: string) => void;
   onDragEnd: (result: any) => void;
+  onFillColumn?: (id: string | number, value: any) => void;
 }
 
 const DraggableHeaders: React.FC<DraggableHeadersProps> = ({ 
@@ -23,7 +24,8 @@ const DraggableHeaders: React.FC<DraggableHeadersProps> = ({
   themeColor, 
   onEditColumn, 
   onDeleteColumn, 
-  onDragEnd 
+  onDragEnd, 
+  onFillColumn
 }) => {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -109,7 +111,7 @@ const DraggableHeaders: React.FC<DraggableHeadersProps> = ({
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <DateHeaderInput col={col} />
+                          <DateHeaderInput col={col} onFillColumn={onFillColumn} />
                         </div>
                       )}
                     </div>

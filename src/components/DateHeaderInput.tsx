@@ -6,12 +6,18 @@ function isMobileDevice() {
   return /android|iphone|ipad|ipod|mobile|touch/i.test(navigator.userAgent);
 }
 
-const DateHeaderInput: React.FC<{ col: any }> = ({ col }) => {
+
+interface DateHeaderInputProps {
+  col: any;
+}
+
+const DateHeaderInput: React.FC<DateHeaderInputProps> = ({ col }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [inputEnabled, setInputEnabled] = useState(false);
+  const [value, setValue] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // عند الموافقة على التعميم
+  // عند الموافقة على التعديل
   const handleConfirm = () => {
     setShowConfirm(false);
     setInputEnabled(true);
@@ -20,18 +26,23 @@ const DateHeaderInput: React.FC<{ col: any }> = ({ col }) => {
     }, 100);
   };
 
-  // عند إلغاء التعميم
+  // عند إلغاء التعديل
   const handleCancel = () => {
     setShowConfirm(false);
     setInputEnabled(false);
   };
 
-  // عند الضغط على الحقل في الجوال
+  // عند الضغط على الحقل في الجوال/الآيباد
   const handleTouch = (e: React.TouchEvent | React.MouseEvent) => {
     if (isMobileDevice() && !inputEnabled) {
       e.preventDefault();
       setShowConfirm(true);
     }
+  };
+
+  // عند تغيير القيمة
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
   };
 
   return (
@@ -45,12 +56,14 @@ const DateHeaderInput: React.FC<{ col: any }> = ({ col }) => {
         readOnly={isMobileDevice() && !inputEnabled}
         onTouchStart={handleTouch}
         onMouseDown={handleTouch}
+        value={value}
+        onChange={handleChange}
       />
       {showConfirm && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#fff', borderRadius: 8, padding: 24, minWidth: 220, boxShadow: '0 2px 16px #0002', textAlign: 'center' }}>
-            <div style={{ marginBottom: 16, fontWeight: 600 }}>تأكيد تعميم التاريخ</div>
-            <div style={{ marginBottom: 20, fontSize: 14 }}>هل تريد تعديل أو تعميم التاريخ على كل الحقول؟</div>
+            <div style={{ marginBottom: 16, fontWeight: 600 }}>تأكيد تعديل التاريخ</div>
+            <div style={{ marginBottom: 20, fontSize: 14 }}>هل تريد تعديل التاريخ لهذا العمود؟</div>
             <button onClick={handleConfirm} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', marginRight: 8, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>نعم</button>
             <button onClick={handleCancel} style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 4, padding: '8px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>إلغاء</button>
           </div>
