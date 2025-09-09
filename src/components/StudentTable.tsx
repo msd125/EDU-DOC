@@ -377,6 +377,12 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                               value={value || ''}
                               onClick={e => e.stopPropagation()}
                               onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
+                              onInput={e => {
+                                const target = e.target as HTMLInputElement;
+                                if (target.value === '') {
+                                  onUpdateStudentData && onUpdateStudentData(student.id, col.id, null);
+                                }
+                              }}
                               className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
                             />
                           </ColorfulCell>
