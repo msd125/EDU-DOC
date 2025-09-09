@@ -372,19 +372,48 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                             openCell={openCell}
                             setOpenCell={setOpenCell}
                           >
-                            <input
-                              type="date"
-                              value={value || ''}
-                              onClick={e => e.stopPropagation()}
-                              onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
-                              onInput={e => {
-                                const target = e.target as HTMLInputElement;
-                                if (target.value === '') {
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                              <input
+                                type="date"
+                                value={value || ''}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => onUpdateStudentData && onUpdateStudentData(student.id, col.id, e.target.value || null)}
+                                onInput={e => {
+                                  const target = e.target as HTMLInputElement;
+                                  if (target.value === '') {
+                                    onUpdateStudentData && onUpdateStudentData(student.id, col.id, null);
+                                  }
+                                }}
+                                className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
+                              />
+                              {/* زر مسح يظهر فقط في الجوال/الآيباد */}
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                aria-label="مسح التاريخ"
+                                onClick={e => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   onUpdateStudentData && onUpdateStudentData(student.id, col.id, null);
-                                }
-                              }}
-                              className="w-full p-1 text-xs rounded border border-slate-300 bg-white text-slate-700 text-center"
-                            />
+                                }}
+                                style={{
+                                  position: 'absolute',
+                                  right: 2,
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#888',
+                                  fontSize: '1.1em',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  display: 'none', // افتراضيًا مخفي
+                                }}
+                                className="date-clear-btn"
+                              >
+                                ×
+                              </button>
+                            </div>
                           </ColorfulCell>
                         );
                       }

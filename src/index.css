@@ -1,3 +1,9 @@
+/* زر مسح التاريخ يظهر فقط في الجوال/الآيباد */
+@media (pointer: coarse), (max-width: 900px) {
+	.date-clear-btn {
+		display: block !important;
+	}
+}
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 /* تم حذف استيراد خط Almarai */
 @tailwind base;
