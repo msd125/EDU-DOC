@@ -1,15 +1,14 @@
 import React from 'react';
 import { Settings } from '../types';
-import { TuneIcon, LogoutIcon } from './Icons';
+import { LogoutIcon } from './Icons';
 
 interface HeaderProps {
     settings: Settings;
     currentUser: string;
-    onOpenSettings: () => void;
     onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ settings, currentUser, onOpenSettings, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ settings, currentUser, onLogout }) => {
     return (
         <header className="glass sticky top-0 z-50 backdrop-blur-xl border-b border-white/20 shadow-lg">
             <div className="container mx-auto">
@@ -41,18 +40,6 @@ const Header: React.FC<HeaderProps> = ({ settings, currentUser, onOpenSettings, 
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3 animate-fade-in">
-                        {/* Settings Button */}
-                        <button
-                            onClick={onOpenSettings}
-                            className="btn-modern btn-secondary p-3 rounded-xl hover:scale-105 
-                                       transition-all duration-200 group"
-                            aria-label="الإعدادات"
-                            title="الإعدادات"
-                        >
-                            <TuneIcon className="w-5 h-5 text-gray-600 group-hover:text-green-600 
-                                              group-hover:rotate-90 transition-all duration-300" />
-                        </button>
-
                         {/* Logout Button */}
                         <button
                             onClick={onLogout}

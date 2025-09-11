@@ -158,46 +158,90 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="w-full flex flex-col justify-center items-start min-h-[60vh] p-0 m-0" style={{ direction: 'rtl', margin: 0, padding: 0, border: 'none' }}>
-      <div className="w-full flex justify-end mb-2 px-4">
-        <div className="relative" ref={menuRef}>
-          <button
-            className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-md text-xs font-semibold text-white transition-colors"
-            onClick={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
-          >
-            <span>الإجراءات</span>
-            <EllipsisIcon className="w-4 h-4" />
-          </button>
-          
-          {isActionsMenuOpen && (
-            <div className="absolute left-0 z-50 mt-1 bg-white shadow-lg rounded-md py-1 min-w-[160px] border border-slate-200">
-              {onDeleteAllStudents && (
-                <button
-                  className="w-full text-right px-4 py-2 text-xs text-red-600 hover:bg-slate-100 transition-colors"
-                  onClick={() => {
-                    setIsActionsMenuOpen(false);
-                    onDeleteAllStudents();
-                  }}
-                >
-                  حذف جميع الأسماء
-                </button>
-              )}
+      <div className="glass rounded-2xl overflow-hidden shadow-2xl border border-white/30 backdrop-blur-xl">
+        {/* Modern Actions Header */}
+        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-white/90 to-white/70 
+                       border-b border-white/20 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full 
+                           flex items-center justify-center text-white font-bold text-sm">
+              📊
             </div>
-          )}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">جدول الطلاب</h3>
+              <p className="text-sm text-gray-600">{students.length} طالب مسجل</p>
+            </div>
+          </div>
+          
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
+              className="btn-modern btn-secondary p-3 relative group"
+              title="خيارات إضافية"
+            >
+              <EllipsisIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              {isActionsMenuOpen && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+              )}
+            </button>
+
+            {isActionsMenuOpen && (
+              <div className="absolute left-0 top-full mt-2 glass rounded-xl p-2 min-w-[220px] z-50 
+                           border border-white/30 shadow-xl animate-scale-in">
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      const hasHighlighted = highlightedRows.length > 0;
+                      if (hasHighlighted) {
+                        setHighlightedRows([]);
+                        toast.success('تم إلغاء تمييز جميع الصفوف');
+                      } else {
+                        const allIds = students.map(s => s.id);
+                        setHighlightedRows(allIds);
+                        toast.success('تم تمييز جميع الصفوف');
+                      }
+                      setIsActionsMenuOpen(false);
+                    }}
+                    className="w-full text-right p-3 rounded-lg hover:bg-white/50 transition-all 
+                             text-sm text-gray-700 flex items-center gap-3 group"
+                  >
+                    <span className="text-lg group-hover:scale-110 transition-transform">
+                      {highlightedRows.length > 0 ? '🔄' : '✨'}
+                    </span>
+                    <span className="font-medium">
+                      {highlightedRows.length > 0 ? 'إلغاء تمييز الكل' : 'تمييز الكل'}
+                    </span>
+                  </button>
+                  
+                  {onDeleteAllStudents && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('⚠️ هل أنت متأكد من حذف جميع الطلاب؟\nسيتم حذف جميع البيانات نهائياً!')) {
+                          onDeleteAllStudents();
+                          toast.success('تم حذف جميع الطلاب');
+                        }
+                        setIsActionsMenuOpen(false);
+                      }}
+                      className="w-full text-right p-3 rounded-lg hover:bg-red-50 transition-all 
+                               text-sm text-red-600 flex items-center gap-3 group"
+                    >
+                      <span className="text-lg group-hover:scale-110 transition-transform">🗑️</span>
+                      <span className="font-medium">حذف جميع الطلاب</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      
-      <div
-        className="w-full bg-white shadow border-2 border-slate-300 overflow-x-auto custom-scroll"
-        style={{ direction: 'rtl', minHeight: '60vh', boxSizing: 'border-box', maxWidth: '100vw', margin: 0, padding: 0, border: 'none', borderRadius: 0 }}
-      >
-        <table
-          className="min-w-full table-auto"
-          style={{ width: '100%', tableLayout: 'auto', minWidth: 600 }}
-        >
-          <thead className="text-[10px] sm:text-xs md:text-sm uppercase sticky top-0 z-30"
-            style={{
-              backgroundColor: themeColor || '#2E8540',
+
+        {/* Modern Table Container */}
+        <div className="overflow-x-auto custom-scroll" style={{ maxHeight: '70vh' }}>
+          <table className="w-full border-collapse relative">
+            {/* Enhanced Table Header */}
+            <thead className="sticky top-0 z-40"
+              style={{
+                backgroundColor: themeColor || '#2E8540',
               borderTopLeftRadius: 12,
               borderTopRightRadius: 12,
               fontFamily: "'Almarai','Cairo','Noto Sans Arabic','Amiri',sans-serif",

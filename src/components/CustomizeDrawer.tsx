@@ -134,24 +134,42 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
   const [selectedColor, setSelectedColor] = useState<string | null>(null); // Currently selected color
 
   return (
-  <div 
-      className={`fixed top-0 left-0 w-full h-full bg-black/30 z-[100] transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+    <div 
+      className={`fixed top-0 left-0 w-full h-full bg-black/40 backdrop-blur-sm z-[100] 
+                  transition-all duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
       style={{ direction: 'rtl' }}
     >
-  <div 
-        className={`fixed top-0 right-0 w-full max-w-md h-full bg-white dark:bg-slate-800 shadow-2xl z-[110] pt-6 px-6 pb-6 overflow-y-auto flex flex-col rounded-s-2xl border-l border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+      <div 
+        className={`fixed top-0 right-0 w-full max-w-md h-full glass border-l border-white/30 
+                   shadow-2xl z-[110] pt-6 px-6 pb-6 overflow-y-auto flex flex-col 
+                   rounded-s-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out 
+                   ${open ? 'translate-x-0' : 'translate-x-full'}`}
         onClick={e => e.stopPropagation()}
       >
-        {/* هيدر مع عنوان وزر الإغلاق */}
-        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white dark:bg-slate-800 pt-1 pb-3 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">إعدادات التخصيص</h2>
+        {/* Modern Header */}
+        <div className="flex justify-between items-center mb-6 sticky top-0 glass rounded-xl p-4 
+                       border border-white/30 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full 
+                           flex items-center justify-center text-white font-bold shadow-lg">
+              ⚙️
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">إعدادات التخصيص</h2>
+              <p className="text-sm text-gray-600">إدارة الفصول والمواد</p>
+            </div>
+          </div>
           <button 
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors"
+            className="btn-modern p-3 rounded-xl hover:scale-110 transition-all duration-200 group
+                     bg-gradient-to-br from-red-50 to-red-100 border border-red-200"
             aria-label="إغلاق"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 className="h-5 w-5 text-red-500 group-hover:text-red-600 group-hover:rotate-90 
+                          transition-all duration-300" 
+                 viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>
