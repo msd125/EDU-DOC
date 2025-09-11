@@ -11,37 +11,64 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ settings, currentUser, onOpenSettings, onLogout }) => {
     return (
-    <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 shrink-0">
-            <div className="flex items-center gap-4">
-                {/* زر القائمة (سايدبار) تم إزالته */}
-                                <div>
-                                        <h1 className="text-xl font-bold text-slate-800">{settings.schoolName}</h1>
-                                                                                <div className="flex items-center gap-2 mt-1">
-                                                                                        <span className="text-sm text-slate-500">مرحباً</span>
-                                                                                        <span
-                                                                                            className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white font-bold text-base"
-                                                                                            style={{ backgroundColor: '#2E8540' }}
-                                                                                            title={currentUser || 'المستخدم'}
-                                                                                        >
-                                                                                            {(currentUser && currentUser.trim().charAt(0)) || 'م'}
-                                                                                        </span>
-                                                                                        <span className="text-sm font-semibold text-slate-800">
-                                                                                            {currentUser || 'المستخدم'}
-                                                                                        </span>
-                                                                                </div>
+        <header className="glass sticky top-0 z-50 backdrop-blur-xl border-b border-white/20 shadow-lg">
+            <div className="container mx-auto">
+                <div className="flex justify-between items-center py-4">
+                    {/* Left Section - School Info */}
+                    <div className="flex items-center gap-6">
+                        <div className="animate-slide-right">
+                            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+                                {settings.schoolName}
+                            </h1>
+                            <div className="flex items-center gap-3 mt-1">
+                                <span className="text-sm text-gray-600 font-medium">مرحباً</span>
+                                <div className="flex items-center gap-2">
+                                    <div
+                                        className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-green-600 
+                                                   flex items-center justify-center text-white font-bold text-sm
+                                                   shadow-lg transform transition-transform hover:scale-110"
+                                        title={currentUser || 'المستخدم'}
+                                    >
+                                        {(currentUser && currentUser.trim().charAt(0)) || 'م'}
+                                    </div>
+                                    <span className="text-sm font-semibold text-gray-800">
+                                        {currentUser || 'المستخدم'}
+                                    </span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Section - Actions */}
+                    <div className="flex items-center gap-3 animate-fade-in">
+                        {/* Settings Button */}
+                        <button
+                            onClick={onOpenSettings}
+                            className="btn-modern btn-secondary p-3 rounded-xl hover:scale-105 
+                                       transition-all duration-200 group"
+                            aria-label="الإعدادات"
+                            title="الإعدادات"
+                        >
+                            <TuneIcon className="w-5 h-5 text-gray-600 group-hover:text-green-600 
+                                              group-hover:rotate-90 transition-all duration-300" />
+                        </button>
+
+                        {/* Logout Button */}
+                        <button
+                            onClick={onLogout}
+                            className="btn-modern p-3 rounded-xl bg-gradient-to-br from-red-50 to-red-100 
+                                       hover:from-red-100 hover:to-red-200 border border-red-200
+                                       hover:scale-105 transition-all duration-200 group"
+                            aria-label="تسجيل الخروج"
+                            title="تسجيل الخروج"
+                        >
+                            <LogoutIcon className="w-5 h-5 text-red-500 group-hover:text-red-600 
+                                                  group-hover:rotate-12 transition-all duration-300" />
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={onLogout}
-                    className="p-2 rounded-full hover:bg-red-500/10 transition-colors"
-                    aria-label="تسجيل الخروج"
-                    data-tooltip="تسجيل الخروج"
-                >
-                    <LogoutIcon className="w-6 h-6 text-red-500" />
-                </button>
-            </div>
-      </header>
+        </header>
     );
 };
 

@@ -327,6 +327,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
   }
 
+  // Function to toggle class expansion
+  const toggleClass = (classId: string) => {
+    setExpandedClasses(expanded => 
+      expanded.includes(classId)
+        ? expanded.filter(id => id !== classId)
+        : [...expanded, classId]
+    );
+  };
+
   // استبدال onDeleteClass و onDeleteSubject بمنطق التأكيد
   const handleDeleteClass = (id: string, name: string) => {
     setConfirmDelete({ type: 'class', classId: id, name });
@@ -485,7 +494,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {activeClass && activeSubject && (
           <div className="p-2 border-t border-slate-200">
             {/* Accordion لمكونات السجل */}
-            <AccordionComponent activeClass={activeClass} activeSubject={activeSubject} onAddColumn={onAddColumn} onDeleteColumn={onDeleteColumn} />
+            <ReportBuilder activeClass={activeClass} activeSubject={activeSubject} onAddColumn={onAddColumn} onDeleteColumn={onDeleteColumn} />
           </div>
         )}
         {/* مجموعة تنسيق الألوان المستقلة */}
@@ -496,6 +505,259 @@ const Sidebar: React.FC<SidebarProps> = ({
               onUpdateThemeColor={onUpdateSubjectThemeColor}
               classId={activeClass.id}
             />
+          </div>
+        )}
+      </aside>
+
+      {/* Desktop Sidebar */}
+      <aside className="glass hidden lg:flex lg:flex-col lg:w-80 xl:w-96 p-6 overflow-y-auto 
+                       border-r border-white/20 backdrop-blur-xl min-h-screen">
+        {/* Header */}
+        <div className="mb-8 animate-slide-right">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+            <BookOpenIcon className="w-7 h-7 text-green-600" />
+            الفصول والمواد
+          </h2>
+          <p className="text-sm text-gray-600">إدارة الفصول الدراسية والمواد</p>
+        </div>
+
+        {/* Classes List */}
+        <div className="space-y-4 flex-1">
+          {classes.map((c, index) => {
+            const isExpanded = expandedClasses.includes(c.id);
+            return (
+              <div key={c.id} className="animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                {/* Class Header */}
+                <div
+                  onClick={() => toggleClass(c.id)}
+                  className="glass p-4 rounded-xl cursor-pointer hover:scale-[1.02] 
+                           transition-all duration-300 group border border-white/30"
+                >
+                  {editingClass?.id === c.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingClass.name}
+                        onChange={e => setEditingClass({ ...editingClass, name: e.target.value })}
+                        className="flex-1 p-2 border rounded-lg text-gray-800 bg-white/90 
+                                 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        autoFocus
+                        onBlur={() => handleSaveClassEdit()}
+                        onKeyDown={e => e.key === 'Enter' && handleSaveClassEdit()}
+                      />
+                      <button
+                        onClick={e => { e.stopPropagation(); handleSaveClassEdit(); }}
+                        className="p-2 rounded-lg hover:bg-green-100 transition-colors"
+                      >
+                        <CheckIcon className="w-5 h-5 text-green-600" />
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setEditingClass(null); }}
+                        className="p-2 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <XIcon className="w-5 h-5 text-red-600" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? (
+                            <ChevronUpIcon className="w-5 h-5 text-gray-600 transition-transform duration-300" />
+                          ) : (
+                            <ChevronDownIcon className="w-5 h-5 text-gray-600 transition-transform duration-300" />
+                          )}
+                        </div>
+                        <span className="font-semibold text-gray-800 text-lg truncate" title={c.name}>
+                          {c.name}
+                        </span>
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                          {c.subjects.length} مادة
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={e => { e.stopPropagation(); setAddingSubjectToClass(c.id); setNewSubjectName(''); }}
+                          className="p-2 rounded-lg hover:bg-green-100 hover:scale-110 transition-all"
+                          title="إضافة مادة"
+                        >
+                          <PlusCircleIcon className="w-5 h-5 text-green-600" />
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); setEditingClass({ id: c.id, name: c.name }); }}
+                          className="p-2 rounded-lg hover:bg-blue-100 hover:scale-110 transition-all"
+                          title="تعديل الفصل"
+                        >
+                          <EditIcon className="w-5 h-5 text-blue-600" />
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDeleteClass(c.id, c.name); }}
+                          className="p-2 rounded-lg hover:bg-red-100 hover:scale-110 transition-all"
+                          title="حذف الفصل"
+                        >
+                          <TrashIcon className="w-5 h-5 text-red-600" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Subjects List */}
+                {isExpanded && (
+                  <div className="mt-3 pr-4 space-y-2 animate-slide-up">
+                    {c.subjects.map((s, subIndex) => {
+                      const isActive = activeSubjectId === s.id;
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => onSelectSubject(s.id)}
+                          className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group
+                                   border-r-4 backdrop-blur-sm ${
+                            isActive
+                              ? 'bg-white/80 shadow-lg border-r-green-500 scale-[1.02]'
+                              : 'bg-white/50 border-r-transparent hover:bg-white/70 hover:scale-[1.01]'
+                          }`}
+                          style={{ 
+                            borderRightColor: isActive ? (s.themeColor || '#22c55e') : 'transparent',
+                            animationDelay: `${subIndex * 50}ms`
+                          }}
+                        >
+                          {editingSubject?.id === s.id ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={editingSubject.name}
+                                onChange={e => setEditingSubject({ ...editingSubject, name: e.target.value })}
+                                className="flex-1 p-2 border rounded-lg text-gray-800 bg-white/90 
+                                         focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                autoFocus
+                                onBlur={() => handleSaveSubjectEdit(c.id)}
+                                onKeyDown={e => e.key === 'Enter' && handleSaveSubjectEdit(c.id)}
+                              />
+                              <button
+                                onClick={e => { e.stopPropagation(); handleSaveSubjectEdit(c.id); }}
+                                className="p-2 rounded-lg hover:bg-green-100 transition-colors"
+                              >
+                                <CheckIcon className="w-4 h-4 text-green-600" />
+                              </button>
+                              <button
+                                onClick={e => { e.stopPropagation(); setEditingSubject(null); }}
+                                className="p-2 rounded-lg hover:bg-red-100 transition-colors"
+                              >
+                                <XIcon className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <BookOpenIcon className={`w-5 h-5 ${isActive ? 'text-green-600' : 'text-gray-500'}`} />
+                                <span className={`font-medium truncate ${isActive ? 'text-gray-800' : 'text-gray-600'}`} 
+                                      title={s.name}>
+                                  {s.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={e => { e.stopPropagation(); setEditingSubject({ id: s.id, name: s.name }); }}
+                                  className="p-1.5 rounded-lg hover:bg-blue-100 hover:scale-110 transition-all"
+                                  title="تعديل المادة"
+                                >
+                                  <EditIcon className="w-4 h-4 text-blue-600" />
+                                </button>
+                                <button
+                                  onClick={e => { e.stopPropagation(); handleDeleteSubject(c.id, s.id, s.name); }}
+                                  className="p-1.5 rounded-lg hover:bg-red-100 hover:scale-110 transition-all"
+                                  title="حذف المادة"
+                                >
+                                  <TrashIcon className="w-4 h-4 text-red-600" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Add Subject Form */}
+                    {addingSubjectToClass === c.id && (
+                      <div className="p-3 bg-white/80 rounded-lg border-2 border-dashed border-green-300 animate-scale-in">
+                        <form onSubmit={e => { e.preventDefault(); handleAddSubject(c.id); }}>
+                          <input
+                            type="text"
+                            value={newSubjectName}
+                            onChange={e => setNewSubjectName(e.target.value)}
+                            placeholder="اسم المادة الجديدة..."
+                            className="w-full p-3 border rounded-lg text-gray-800 bg-white 
+                                     focus:ring-2 focus:ring-green-500 focus:border-transparent
+                                     placeholder-gray-400"
+                            autoFocus
+                          />
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              type="submit"
+                              className="btn-modern btn-primary flex-1 py-2"
+                            >
+                              <PlusIcon className="w-4 h-4" />
+                              إضافة
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAddingSubjectToClass(null)}
+                              className="btn-modern btn-secondary py-2"
+                            >
+                              إلغاء
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add Class Form */}
+        <div className="mt-8 pt-6 border-t border-white/20">
+          <form onSubmit={handleAddClass} className="animate-fade-in">
+            <input
+              type="text"
+              value={newClassName}
+              onChange={e => setNewClassName(e.target.value)}
+              placeholder="اسم الفصل الجديد..."
+              className="w-full p-3 border rounded-lg text-gray-800 bg-white/90 mb-3
+                       focus:ring-2 focus:ring-green-500 focus:border-transparent
+                       placeholder-gray-400"
+            />
+            <button
+              type="submit"
+              className="btn-modern btn-primary w-full py-3 text-sm"
+            >
+              <PlusIcon className="w-5 h-5" />
+              إضافة فصل
+            </button>
+          </form>
+        </div>
+
+        {/* Report Builder & Color Theme */}
+        {activeClass && activeSubject && (
+          <div className="mt-6 space-y-4">
+            <div className="glass p-4 rounded-xl border border-white/30">
+              <ReportBuilder 
+                activeClass={activeClass} 
+                activeSubject={activeSubject} 
+                onAddColumn={onAddColumn} 
+                onDeleteColumn={onDeleteColumn} 
+              />
+            </div>
+            <div className="glass p-4 rounded-xl border border-white/30">
+              <ColorThemeGroup
+                activeSubject={activeSubject}
+                onUpdateThemeColor={onUpdateSubjectThemeColor}
+                classId={activeClass.id}
+              />
+            </div>
           </div>
         )}
       </aside>
