@@ -135,21 +135,21 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
 
   return (
     <div 
-      className={`fixed top-0 left-0 w-full h-full bg-black/40 backdrop-blur-sm z-[100] 
+      className={`fixed top-0 left-0 w-full h-full bg-black/60 backdrop-blur-sm z-[100] 
                   transition-all duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
       style={{ direction: 'rtl' }}
     >
       <div 
-        className={`fixed top-0 right-0 w-full max-w-md h-full glass border-l border-white/30 
+        className={`fixed top-0 right-0 w-full max-w-md h-full bg-white border-l border-gray-200 
                    shadow-2xl z-[110] pt-6 px-6 pb-6 overflow-y-auto flex flex-col 
-                   rounded-s-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out 
+                   rounded-s-2xl transition-transform duration-300 ease-in-out 
                    ${open ? 'translate-x-0' : 'translate-x-full'}`}
         onClick={e => e.stopPropagation()}
       >
         {/* Modern Header */}
-        <div className="flex justify-between items-center mb-6 sticky top-0 glass rounded-xl p-4 
-                       border border-white/30 shadow-lg">
+        <div className="flex justify-between items-center mb-6 sticky top-0 bg-white rounded-xl p-4 
+                       border border-gray-200 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full 
                            flex items-center justify-center text-white font-bold shadow-lg">
@@ -163,7 +163,7 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
           <button 
             onClick={onClose}
             className="btn-modern p-3 rounded-xl hover:scale-110 transition-all duration-200 group
-                     bg-gradient-to-br from-red-50 to-red-100 border border-red-200"
+                     bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:bg-red-100"
             aria-label="إغلاق"
           >
             <svg xmlns="http://www.w3.org/2000/svg" 
@@ -210,14 +210,16 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
               const classColor = groupColors[idx % groupColors.length];
               const isCollapsed = collapsedClasses[cls.id];
               return (
-                <div key={cls.id} className="rounded-xl p-3 shadow-sm border border-slate-200 bg-white/80 transition-all" style={{ boxShadow: '0 2px 8px -2px #0001', backgroundColor: classColor + '11' }}>
+                <div key={cls.id} className="rounded-xl p-3 shadow-sm border border-slate-200 bg-white 
+                                          transition-all hover:shadow-md" 
+                     style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.1)', backgroundColor: 'white' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCollapsedClasses(prev => ({ ...prev, [cls.id]: !prev[cls.id] }))}>
                       {editingClassId === cls.id ? (
                         <div className="flex items-center gap-2">
                           <input
                             className="font-bold px-3 py-1.5 rounded-lg text-base shadow-sm bg-white border border-emerald-400 text-slate-900"
-                            style={{ minWidth: 80, backgroundColor: classColor + '22' }}
+                            style={{ minWidth: 80, backgroundColor: 'white' }}
                             value={editingClassName}
                             autoFocus
                             onChange={e => setEditingClassName(e.target.value)}
@@ -273,12 +275,12 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
                         cls.subjects.map((sub: Subject, sidx: number) => {
                           const subjectColor = sub.themeColor || groupColors[(idx * 7 + sidx * 3) % groupColors.length];
                           return (
-                            <div key={sub.id} className="flex items-center justify-between text-sm rounded-lg shadow-sm border border-slate-200 bg-white/80 my-1 px-2 py-1 transition-all" style={{ backgroundColor: subjectColor + '11' }}>
+                            <div key={sub.id} className="flex items-center justify-between text-sm rounded-lg shadow-sm border border-slate-200 bg-white my-1 px-2 py-1 transition-all hover:shadow-md" style={{ backgroundColor: 'white' }}>
                               {editingSubjectId === sub.id ? (
                                 <div className="flex items-center gap-1">
                                   <input
                                     className="font-semibold px-3 py-1 rounded-lg text-sm shadow-sm bg-white border border-emerald-400 text-slate-900"
-                                    style={{ minWidth: 60, backgroundColor: subjectColor + '22' }}
+                                    style={{ minWidth: 60, backgroundColor: 'white' }}
                                     value={editingSubjectName}
                                     autoFocus
                                     onChange={e => setEditingSubjectName(e.target.value)}
@@ -331,10 +333,10 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
               <span className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
             </button>
             {expanded && (
-              <div className="mt-2 flex flex-col gap-3 border border-slate-200 rounded-lg p-3 bg-slate-50 max-h-[400px] overflow-y-auto shadow-sm">
+              <div className="mt-2 flex flex-col gap-3 border border-slate-200 rounded-lg p-3 bg-gray-50 max-h-[400px] overflow-y-auto shadow-sm">
                 {recordGroups.map((group, idx) => (
-                  <div key={group.label} className="mb-2 p-2 rounded-lg shadow-sm" style={{backgroundColor: groupColors[idx % groupColors.length], color: '#fff'}}>
-                    <div className="font-semibold mb-2 text-base">{group.label}</div>
+                  <div key={group.label} className="mb-2 p-2 rounded-lg shadow-sm bg-white border border-gray-200">
+                    <div className="font-semibold mb-2 text-base text-gray-800" style={{ color: groupColors[idx % groupColors.length] }}>{group.label}</div>
                     <div className="flex flex-col gap-1">
                       {group.options.map(opt => (
                         <label key={opt.name} className="flex items-center gap-2 cursor-pointer text-sm">
@@ -422,11 +424,11 @@ const CustomizeDrawer: React.FC<CustomizeDrawerProps> = ({
             <span className={`transition-transform ${showColorGroup ? 'rotate-90' : ''}`}>▶</span>
           </button>
           {showColorGroup && (
-            <div className="mt-2 flex flex-wrap gap-2 border border-slate-200 rounded-lg p-3 bg-slate-50 shadow-sm">
+            <div className="mt-2 flex flex-wrap gap-2 border border-slate-200 rounded-lg p-3 bg-gray-50 shadow-sm">
               {groupColors.map((color) => (
                 <button
                   key={color}
-                  className={`w-8 h-8 rounded-full border-2 mb-1 focus:outline-none transition-all ${selectedColor === color ? 'ring-2 ring-emerald-500 border-emerald-600' : 'border-slate-300'}`}
+                  className={`w-8 h-8 rounded-full border-2 mb-1 focus:outline-none transition-all hover:scale-110 ${selectedColor === color ? 'ring-2 ring-emerald-500 border-emerald-600' : 'border-slate-300'}`}
                   style={{ backgroundColor: color }}
                   title={color}
                   type="button"

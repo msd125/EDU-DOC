@@ -4,7 +4,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { getContrastColor, getHeaderBg } from '../utils/colorUtils';
 import EditColumnModal from './EditColumnModal';
-import { EditIcon, TrashIcon, EllipsisIcon } from './Icons';
+import SimpleModal from './SimpleModal';
 import DraggableColumns from './DraggableColumns';
 import '../styles/draggable-columns.css';
 import { saveColumnOrder, getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
@@ -32,7 +32,6 @@ interface StudentTableProps {
   onFillColumn?: (id: string | number, value: any) => void;
   onUpdateStudentData?: (studentId: string | number, colId: string | number, value: any) => void;
   onDeleteStudent?: (studentId: string | number, name: string) => void;
-  onDeleteAllStudents?: () => void;
   themeColor?: string;
   nameSortOrder?: 'asc' | 'desc';
   onNameSortChange?: (order: 'asc' | 'desc') => void;
@@ -66,7 +65,6 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
     onFillColumn, 
     onUpdateStudentData, 
     onDeleteStudent,
-    onDeleteAllStudents,
     themeColor,
     nameSortOrder = 'asc',
     onNameSortChange,
@@ -75,6 +73,17 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
   
   // State for editing column
   const [editingColumn, setEditingColumn] = useState<ColumnType | null>(null);
+  
+  // State for delete confirmation modal (للأعمدة وجميع الطلاب فقط)
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    type: 'column' | 'all-students';
+    item?: ColumnType;
+    title?: string;
+  }>({
+    isOpen: false,
+    type: 'column'
+  });
   
   // Ordered columns state
   const [orderedColumns, setOrderedColumns] = useState<ColumnType[]>(() => {
@@ -125,23 +134,29 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
     }
   });
 
-  // Actions menu state
-  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-  
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsActionsMenuOpen(false);
-      }
-    };
+  // Handle delete confirmation (للأعمدة فقط)
+  const handleDeleteConfirm = () => {
+    if (deleteModal.type === 'column' && deleteModal.item && onDeleteColumn) {
+      const column = deleteModal.item as ColumnType;
+      onDeleteColumn(column.id, column.name);
+      toast.success(`✅ تم حذف العمود: ${column.name}`);
+    }
     
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [menuRef]);
+    setDeleteModal({ isOpen: false, type: 'column' });
+  };
+
+  // Handle column delete with modal
+  const handleColumnDelete = (id: string | number, name: string) => {
+    const column = columns.find(c => c.id === id);
+    if (column) {
+      setDeleteModal({
+        isOpen: true,
+        type: 'column',
+        item: column,
+        title: 'حذف عمود'
+      });
+    }
+  };
   
 
   // إدارة أداة التخصيص المفتوحة (خانة واحدة فقط)
@@ -158,86 +173,15 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="glass rounded-2xl overflow-hidden shadow-2xl border border-white/30 backdrop-blur-xl">
-        {/* Modern Actions Header */}
+      <div className="full-page-table w-full h-full glass rounded-2xl overflow-hidden shadow-2xl border border-white/30 backdrop-blur-xl flex flex-col">
+        {/* Modern Header */}
         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-white/90 to-white/70 
-                       border-b border-white/20 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full 
-                           flex items-center justify-center text-white font-bold text-sm">
-              📊
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-800">جدول الطلاب</h3>
-              <p className="text-sm text-gray-600">{students.length} طالب مسجل</p>
-            </div>
-          </div>
-          
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
-              className="btn-modern btn-secondary p-3 relative group"
-              title="خيارات إضافية"
-            >
-              <EllipsisIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-              {isActionsMenuOpen && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-              )}
-            </button>
-
-            {isActionsMenuOpen && (
-              <div className="absolute left-0 top-full mt-2 glass rounded-xl p-2 min-w-[220px] z-50 
-                           border border-white/30 shadow-xl animate-scale-in">
-                <div className="space-y-1">
-                  <button
-                    onClick={() => {
-                      const hasHighlighted = highlightedRows.length > 0;
-                      if (hasHighlighted) {
-                        setHighlightedRows([]);
-                        toast.success('تم إلغاء تمييز جميع الصفوف');
-                      } else {
-                        const allIds = students.map(s => s.id);
-                        setHighlightedRows(allIds);
-                        toast.success('تم تمييز جميع الصفوف');
-                      }
-                      setIsActionsMenuOpen(false);
-                    }}
-                    className="w-full text-right p-3 rounded-lg hover:bg-white/50 transition-all 
-                             text-sm text-gray-700 flex items-center gap-3 group"
-                  >
-                    <span className="text-lg group-hover:scale-110 transition-transform">
-                      {highlightedRows.length > 0 ? '🔄' : '✨'}
-                    </span>
-                    <span className="font-medium">
-                      {highlightedRows.length > 0 ? 'إلغاء تمييز الكل' : 'تمييز الكل'}
-                    </span>
-                  </button>
-                  
-                  {onDeleteAllStudents && (
-                    <button
-                      onClick={() => {
-                        if (window.confirm('⚠️ هل أنت متأكد من حذف جميع الطلاب؟\nسيتم حذف جميع البيانات نهائياً!')) {
-                          onDeleteAllStudents();
-                          toast.success('تم حذف جميع الطلاب');
-                        }
-                        setIsActionsMenuOpen(false);
-                      }}
-                      className="w-full text-right p-3 rounded-lg hover:bg-red-50 transition-all 
-                               text-sm text-red-600 flex items-center gap-3 group"
-                    >
-                      <span className="text-lg group-hover:scale-110 transition-transform">🗑️</span>
-                      <span className="font-medium">حذف جميع الطلاب</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+                       border-b border-white/20 backdrop-blur-sm flex-shrink-0">
         </div>
 
         {/* Modern Table Container */}
-        <div className="overflow-x-auto custom-scroll" style={{ maxHeight: '70vh' }}>
-          <table className="w-full border-collapse relative">
+        <div className="full-page-table-container flex-1 overflow-auto custom-scroll">
+          <table className="w-full h-full border-collapse relative min-w-full">
             {/* Enhanced Table Header */}
             <thead className="sticky top-0 z-40"
               style={{
@@ -288,7 +232,7 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                   const column = columns.find(c => c.id === id);
                   if (column) setEditingColumn(column);
                 }}
-                onDeleteColumn={onDeleteColumn}
+                onDeleteColumn={handleColumnDelete}
                 onFillColumn={onFillColumn}
                 onColumnsReorder={handleColumnOrderChange}
               />
@@ -510,6 +454,22 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
             onEditColumn(editingColumn!.id, updatedData);
             setEditingColumn(null);
           }}
+        />
+      )}
+
+      {/* Delete Confirmation Popup */}
+      {deleteModal.isOpen && (
+        <SimpleModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => {
+            setDeleteModal({ isOpen: false, type: 'column' });
+          }}
+          onConfirm={handleDeleteConfirm}
+          title={deleteModal.title || 'تأكيد الحذف'}
+          message={`هل أنت متأكد من حذف العمود؟
+
+سيتم حذف العمود وجميع البيانات المرتبطة به
+هذا الإجراء لا يمكن التراجع عنه`}
         />
       )}
       

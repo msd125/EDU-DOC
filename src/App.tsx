@@ -33,15 +33,26 @@ const App: React.FC = () => {
   }, []);
   const userSettingsKey = 'student-gradebook-settings-' + currentUser;
   const userClassesKey = 'student-gradebook-classes-' + currentUser;
-  const defaultSettings: Settings = {
+  
+  // القيمة الافتراضية للمستخدمين الجدد فقط
+  const getDefaultSettings = (): Settings => ({
     schoolName: 'مدرستي',
     teacherName: 'اسمي',
     principalName: 'اسم المدير',
     educationDirectorate: 'إدارة التعليم بمنطقة...',
-    academicYear: '1445هـ',
+    academicYear: `${new Date().getFullYear()}`,
     semester: 'الفصل الدراسي الأول',
-  };
-  const [settings, setSettings] = useLocalStorage<Settings>(userSettingsKey, defaultSettings);
+  });
+  
+  const [settings, setSettings] = useLocalStorage<Settings>(userSettingsKey, getDefaultSettings());
+  
+  // تحديث لمرة واحدة فقط للمستخدمين الذين لديهم القيمة القديمة
+  useEffect(() => {
+    if (settings.academicYear === '1445هـ') {
+      setSettings(prev => ({ ...prev, academicYear: new Date().getFullYear().toString() }));
+    }
+  }, []); // يعمل مرة واحدة فقط عند التحميل
+  
   const [classes, setClasses] = useLocalStorage<Class[]>(userClassesKey, []);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<{ message: string; onConfirm: () => void; confirmLabel?: string } | null>(null);

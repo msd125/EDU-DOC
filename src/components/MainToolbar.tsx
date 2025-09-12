@@ -13,6 +13,7 @@ interface MainToolbarProps {
   onOpenCustomize?: () => void;
   onSaveTemplate?: () => void;
   onUseTemplate?: () => void;
+  onDeleteAllStudents?: () => void;
   classType?: string;
   onAdminExport?: () => void;
 }
@@ -26,6 +27,7 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
   onOpenCustomize,
   onSaveTemplate,
   onUseTemplate,
+  onDeleteAllStudents,
   classType,
   onAdminExport
 }) => {
@@ -33,7 +35,8 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
     <nav className="glass sticky top-0 z-40 backdrop-blur-xl border-b border-white/20 shadow-lg">
       <div className="container mx-auto py-4">
         <div className="flex flex-wrap gap-3 items-center justify-center">
-          {/* Primary Actions */}
+          
+          {/* === مجموعة الإدارة === */}
           <button 
             onClick={onOpenCustomize} 
             className="btn-modern btn-primary flex items-center gap-2 px-4 py-2.5 text-sm font-semibold 
@@ -43,6 +46,17 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
             إدارة الصفوف والجداول
           </button>
           
+          <button 
+            onClick={onOpenSettings} 
+            className="btn-modern bg-gradient-to-r from-gray-600 to-gray-700 text-white 
+                     flex items-center gap-2 px-4 py-2.5 text-sm font-semibold 
+                     shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
+          >
+            <TuneIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" /> 
+            الإعدادات
+          </button>
+
+          {/* === مجموعة إضافة البيانات === */}
           <button 
             onClick={onAddStudent} 
             className="btn-modern bg-gradient-to-r from-emerald-500 to-emerald-600 text-white 
@@ -63,7 +77,7 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
             {classType === 'إداري' ? 'استيراد أسماء' : 'استيراد طلاب'}
           </button>
 
-          {/* Export Actions */}
+          {/* === مجموعة التصدير (Excel و PDF متجاورين) === */}
           {classType !== 'إداري' && (
             <>
               <button 
@@ -77,7 +91,7 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
               
               <button 
                 onClick={onExportPdf} 
-                className="btn-modern bg-gradient-to-r from-red-500 to-red-600 text-white 
+                className="btn-modern bg-gradient-to-r from-red-600 to-red-700 text-white 
                          flex items-center gap-2 px-4 py-2.5 text-sm font-semibold shadow-lg 
                          hover:shadow-xl transform hover:scale-105 transition-all duration-200"
               >
@@ -86,7 +100,7 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
             </>
           )}
 
-          {/* Admin Export */}
+          {/* تصدير إداري */}
           {classType === 'إداري' && (
             <button 
               onClick={onAdminExport} 
@@ -94,21 +108,11 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
                        flex items-center gap-2 px-4 py-2.5 text-sm font-semibold shadow-lg 
                        hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
-              <BookOpenIcon className="w-4 h-4" /> الإدارة المدرسية
+              <BookOpenIcon className="w-4 h-4" /> خيارات التصدير
             </button>
           )}
 
-          {/* Settings */}
-          <button 
-            onClick={onOpenSettings} 
-            className="btn-modern btn-secondary flex items-center gap-2 px-4 py-2.5 text-sm font-semibold 
-                     shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
-          >
-            <TuneIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" /> 
-            الإعدادات
-          </button>
-          
-          {/* Template Actions */}
+          {/* === مجموعة القوالب (حفظ واستخدام متجاورين) === */}
           {onSaveTemplate && (
             <button 
               onClick={onSaveTemplate} 
@@ -130,6 +134,21 @@ const MainToolbar: React.FC<MainToolbarProps> = ({
               <TemplateIcon className="w-4 h-4" /> استخدام قالب
             </button>
           )}
+
+          {/* === مجموعة الحذف (في النهاية) === */}
+          {onDeleteAllStudents && (
+            <button 
+              onClick={onDeleteAllStudents} 
+              className="btn-modern bg-gradient-to-r from-red-600 to-red-700 text-white 
+                       flex items-center gap-2 px-4 py-2.5 text-sm font-semibold shadow-lg 
+                       hover:shadow-xl transform hover:scale-105 transition-all duration-200 
+                       hover:from-red-700 hover:to-red-800"
+            >
+              <span className="w-4 h-4 text-sm">🗑️</span> 
+              {classType === 'إداري' ? 'حذف كل الأسماء' : 'حذف كل الأسماء'}
+            </button>
+          )}
+
         </div>
       </div>
     </nav>

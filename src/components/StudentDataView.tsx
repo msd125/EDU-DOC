@@ -8,7 +8,7 @@ import ClassSubjectFilters from './ClassSubjectFilters';
 import AddColumnModal from './AddColumnModal';
 import ImportStudentsModal from './ImportStudentsModal';
 import AddStudentModal from './AddStudentModal';
-import ConfirmModal from './ConfirmModal';
+import SimpleModal from './SimpleModal';
 import { ClipboardListIcon, ChevronRightIcon, ChevronLeftIcon } from './Icons';
 import { getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
 
@@ -367,6 +367,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   // مفتاح فريد لكل فصل/مادة
   const getPageKey = () => {
     return `currentPage-${activeClass?.id || 'none'}-${activeSubject?.id || 'none'}`;
@@ -394,31 +395,22 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     sessionStorage.setItem(getPageKey(), '1');
   }, [activeClass?.id, activeSubject?.id]);
   
-  // حالة لنافذة تأكيد حذف جميع الطلاب
-  const [isConfirmDeleteAllOpen, setIsConfirmDeleteAllOpen] = useState(false);
-  
-  // دالة لحذف جميع الطلاب - تفتح نافذة تأكيد فقط
+  // دالة لفتح مودال التأكيد على حذف جميع الأسماء
   const handleDeleteAllStudents = () => {
-    if (activeClass && activeClass.students && activeClass.students.length > 0) {
-      // فتح نافذة التأكيد بدلاً من حذف الطلاب مباشرة
-      setIsConfirmDeleteAllOpen(true);
-    }
+    setIsDeleteAllModalOpen(true);
   };
-  
-  // عند تأكيد حذف جميع الطلاب - هذا ينفذ بعد النقر على "حذف الجميع" في نافذة التأكيد
+
+  // دالة الحذف الفعلي بعد التأكيد
   const confirmDeleteAllStudents = () => {
     if (activeClass && activeClass.students && activeClass.students.length > 0 && props.setClasses) {
       const studentsCount = activeClass.students.length;
       
       try {
-        // إخفاء نافذة التأكيد
-        setIsConfirmDeleteAllOpen(false);
-        
         // استخدام دالة setClasses المستلمة من App.tsx
         props.setClasses((prevClasses: Class[]) => 
           prevClasses.map((cls: Class) => 
             cls.id === activeClass.id 
-              ? { ...cls, students: [] } // حذف جميع الطلاب من الصف الحالي
+              ? { ...cls, students: [] } // حذف جميع الأسماء من الصف الحالي
               : cls
           )
         );
@@ -428,12 +420,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         
       } catch (error) {
         console.error('خطأ أثناء حذف جميع الأسماء:', error);
-        toast.error('حدث خطأ أثناء محاولة حذف جميع الأسماء');
+        toast.error('فشل في حذف الأسماء');
       }
-    } else if (!props.setClasses) {
-      // إذا لم يتم تمرير دالة setClasses
-      toast.error('حدث خطأ: لا يمكن تحديث البيانات');
-      setIsConfirmDeleteAllOpen(false);
     }
   };
   
@@ -728,6 +716,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         onAddStudent={() => setIsAddStudentModalOpen(true)}
         onAddColumn={() => setIsAddColumnModalOpen(true)}
         onImportStudents={() => setIsImportModalOpen(true)}
+        onDeleteAllStudents={handleDeleteAllStudents}
         onExportExcel={onExportExcel}
         onExportPdf={onExportPdf}
         onOpenSettings={onOpenSettings}
@@ -829,15 +818,14 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         </div>
       )}
 
-      <div className="w-full flex-1 flex flex-col items-center justify-start" style={{marginTop:0,paddingTop:0,border:'none'}}>
-        <div className="w-full max-w-6xl 2xl:max-w-4xl overflow-x-auto custom-scroll relative" style={{ direction: 'rtl', margin: '0 auto', marginTop: 0, paddingTop: 0, top: 0, border:'none' }}>
+      <div className="full-page-table w-full h-full flex-1 flex flex-col">
+        <div className="full-page-table-container w-full h-full flex-1 overflow-hidden" style={{ direction: 'rtl' }}>
           <StudentTable
             columns={columnsInOrder}
             students={paginatedStudents}
             onEditColumn={(columnId, updatedData) => onEditColumn(activeClass.id, activeSubject.id, String(columnId), updatedData)}
             onDeleteColumn={(columnId, columnName) => onDeleteColumn(activeClass.id, activeSubject.id, String(columnId), columnName)}
             onDeleteStudent={(studentId, studentName) => onDeleteStudent(activeClass.id, String(studentId), studentName)}
-            onDeleteAllStudents={handleDeleteAllStudents}
             onFillColumn={(columnId, value) => onFillColumn(activeClass.id, activeSubject.id, String(columnId), value)}
             onUpdateStudentData={(studentId, columnId, value) => onUpdateStudentData(activeClass.id, String(studentId), String(columnId), value)}
             themeColor={themeColor}
@@ -845,10 +833,6 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
             onNameSortChange={setNameSortOrder}
             // لا تمرر دالة onColumnOrderChange
           />
-          {/* شريط تمرير سفلي ظاهر دائماً عند الحاجة */}
-          <div className="w-full overflow-x-auto mt-1" style={{ height: 12 }}>
-            <div style={{ width: '1200px', height: 1 }} />
-          </div>
         </div>
       </div>
 
@@ -928,14 +912,18 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
           }}
         />
       )}
-      
-      {/* نافذة تأكيد حذف جميع الأسماء */}
-      {isConfirmDeleteAllOpen && (
-        <ConfirmModal
-          message={`هل أنت متأكد من أنك تريد حذف جميع الأسماء (${activeClass?.students?.length || 0})؟ لا يمكن التراجع عن هذا الإجراء.`}
-          confirmLabel="حذف الجميع"
+
+      {/* Delete All Names Confirmation Modal */}
+      {isDeleteAllModalOpen && (
+        <SimpleModal
+          isOpen={isDeleteAllModalOpen}
+          onClose={() => setIsDeleteAllModalOpen(false)}
           onConfirm={confirmDeleteAllStudents}
-          onCancel={() => setIsConfirmDeleteAllOpen(false)}
+          title="تأكيد حذف جميع الأسماء"
+          message={`هل أنت متأكد من حذف جميع الأسماء؟
+
+سيتم حذف ${activeClass?.students?.length || 0} اسم نهائياً
+هذا الإجراء لا يمكن التراجع عنه`}
         />
       )}
     </div>
