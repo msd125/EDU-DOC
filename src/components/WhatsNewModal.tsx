@@ -130,7 +130,8 @@ const WhatsNewModal = () => {
     <>
       <Confetti />
       <div
-        style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,0.25)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}
+        className="whats-new-modal"
+        style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,0.25)',zIndex:2147483647,display:'flex',alignItems:'center',justifyContent:'center'}}
         onClick={handleClose}
       >
         <div
@@ -149,6 +150,7 @@ const WhatsNewModal = () => {
             overflowX:'hidden',
             overscrollBehavior:'contain',
             WebkitOverflowScrolling:'touch',
+            zIndex:2147483647,
           }}
           onClick={e => e.stopPropagation()}
         >
@@ -189,12 +191,56 @@ const WhatsNewModal = () => {
             </div>
             <div style={{fontSize:11,marginTop:6,color:'#555'}}>🚀 هذا التحديث يركز على تحسين تجربة المستخدم والأداء العام مع تصميم عصري ومتطور.</div>
           </div>
-          <div style={{marginTop:10,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <label style={{fontSize:11}}>
-              <input type="checkbox" checked={dontShow} onChange={e => setDontShow(e.target.checked)} />
-              <span style={{marginRight:6}}>لا تظهر مرة أخرى</span>
-            </label>
-            <button onClick={handleClose} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'6px 16px',fontWeight:'bold',fontSize:13,cursor:'pointer',boxShadow:'0 2px 8px #16a34a22'}}>تم</button>
+          <div style={{marginTop:10,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+            <div 
+              onClick={() => setDontShow(!dontShow)}
+              style={{
+                fontSize:11,
+                display:'flex',
+                alignItems:'center',
+                cursor:'pointer',
+                padding:'8px',
+                userSelect:'none',
+                minHeight:'32px',
+                borderRadius:'6px',
+                border:'1px solid #e5e7eb',
+                background:dontShow ? '#f0fdf4' : '#fff',
+                transition:'all 0.2s ease'
+              }}
+            >
+              <input 
+                type="checkbox" 
+                checked={dontShow} 
+                onChange={e => setDontShow(e.target.checked)}
+                style={{
+                  marginLeft:8,
+                  transform:'scale(1.3)',
+                  cursor:'pointer',
+                  accentColor:'#16a34a'
+                }}
+              />
+              <span style={{marginRight:6,color:'#374151',fontWeight:dontShow ? 'bold' : 'normal'}}>لا تظهر مرة أخرى</span>
+            </div>
+            <button 
+              onClick={handleClose} 
+              style={{
+                background:'#16a34a',
+                color:'#fff',
+                border:'none',
+                borderRadius:8,
+                padding:'8px 16px',
+                fontWeight:'bold',
+                fontSize:13,
+                cursor:'pointer',
+                boxShadow:'0 2px 8px #16a34a22',
+                minHeight:'32px',
+                transition:'all 0.2s ease'
+              }}
+              onMouseOver={e => (e.target as HTMLButtonElement).style.background = '#15803d'}
+              onMouseOut={e => (e.target as HTMLButtonElement).style.background = '#16a34a'}
+            >
+              تم
+            </button>
           </div>
         </div>
       </div>
