@@ -165,6 +165,41 @@ const WhatsNewModal = () => {
             title="إغلاق"
           >×</button>
           <h2 style={{fontWeight:'bold',fontSize:20,marginBottom:10,textAlign:'center',color:'#16a34a',letterSpacing:1}}>🎉 جديد النسخة 2025/09/12</h2>
+          
+          {/* مربع الاختيار في الأعلى للوصول السهل على الجوال */}
+          <div style={{marginBottom:15,display:'flex',justifyContent:'center'}}>
+            <div 
+              onClick={() => setDontShow(!dontShow)}
+              style={{
+                fontSize:12,
+                display:'flex',
+                alignItems:'center',
+                cursor:'pointer',
+                padding:'10px 15px',
+                userSelect:'none',
+                minHeight:'40px',
+                borderRadius:'8px',
+                border:'2px solid #e5e7eb',
+                background:dontShow ? '#f0fdf4' : '#fff',
+                transition:'all 0.2s ease',
+                boxShadow:'0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              <input 
+                type="checkbox" 
+                checked={dontShow} 
+                onChange={e => setDontShow(e.target.checked)}
+                style={{
+                  marginLeft:10,
+                  transform:'scale(1.4)',
+                  cursor:'pointer',
+                  accentColor:'#16a34a'
+                }}
+              />
+              <span style={{marginRight:8,color:'#374151',fontWeight:dontShow ? 'bold' : 'normal'}}>لا تظهر مرة أخرى</span>
+            </div>
+          </div>
+          
           <div style={{marginBottom:12}}>
             {features.map((f,i) => (
               <div key={i} style={{margin:'12px 0',padding:'8px 8px',borderRadius:10,background:'#f3f4f6',boxShadow:'0 1px 4px #0001'}}>
@@ -191,55 +226,29 @@ const WhatsNewModal = () => {
             </div>
             <div style={{fontSize:11,marginTop:6,color:'#555'}}>🚀 هذا التحديث يركز على تحسين تجربة المستخدم والأداء العام مع تصميم عصري ومتطور.</div>
           </div>
-          <div style={{marginTop:10,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
-            <div 
-              onClick={() => setDontShow(!dontShow)}
-              style={{
-                fontSize:11,
-                display:'flex',
-                alignItems:'center',
-                cursor:'pointer',
-                padding:'8px',
-                userSelect:'none',
-                minHeight:'32px',
-                borderRadius:'6px',
-                border:'1px solid #e5e7eb',
-                background:dontShow ? '#f0fdf4' : '#fff',
-                transition:'all 0.2s ease'
-              }}
-            >
-              <input 
-                type="checkbox" 
-                checked={dontShow} 
-                onChange={e => setDontShow(e.target.checked)}
-                style={{
-                  marginLeft:8,
-                  transform:'scale(1.3)',
-                  cursor:'pointer',
-                  accentColor:'#16a34a'
-                }}
-              />
-              <span style={{marginRight:6,color:'#374151',fontWeight:dontShow ? 'bold' : 'normal'}}>لا تظهر مرة أخرى</span>
-            </div>
+          
+          {/* زر الإغلاق بعرض كامل */}
+          <div style={{marginTop:15,display:'flex',justifyContent:'center'}}>
             <button 
               onClick={handleClose} 
               style={{
                 background:'#16a34a',
                 color:'#fff',
                 border:'none',
-                borderRadius:8,
-                padding:'8px 16px',
+                borderRadius:10,
+                padding:'12px 24px',
                 fontWeight:'bold',
-                fontSize:13,
+                fontSize:14,
                 cursor:'pointer',
-                boxShadow:'0 2px 8px #16a34a22',
-                minHeight:'32px',
+                boxShadow:'0 3px 10px #16a34a33',
+                minHeight:'44px',
+                minWidth:'200px',
                 transition:'all 0.2s ease'
               }}
               onMouseOver={e => (e.target as HTMLButtonElement).style.background = '#15803d'}
               onMouseOut={e => (e.target as HTMLButtonElement).style.background = '#16a34a'}
             >
-              تم
+              تم ✅
             </button>
           </div>
         </div>
