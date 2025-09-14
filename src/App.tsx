@@ -20,9 +20,12 @@ import ImportTemplateModal from './components/ImportTemplateModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import WhatsNewModal from './components/WhatsNewModal';
 import Login from './components/Login';
+import { FULL_VERSION } from './utils/version';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(() => sessionStorage.getItem('gradebook-user'));
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  
   // مراقبة sessionStorage لتحديث المستخدم تلقائياً بعد الاستيراد
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,6 +34,40 @@ const App: React.FC = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // التحقق من إظهار نافذة "ما الجديد" للإصدار الجديد
+  useEffect(() => {
+    if (currentUser) {
+      const dontShowThisVersion = localStorage.getItem(`whatsNewDontShow-${FULL_VERSION}`) === 'true';
+      
+      if (!dontShowThisVersion) {
+        // إظهار النافذة بعد ثانية واحدة لضمان تحميل التطبيق كاملاً
+        setTimeout(() => {
+          setShowWhatsNew(true);
+        }, 1000);
+      }
+    }
+  }, [currentUser]);
+
+  // إغلاق نافذة "ما الجديد" وحفظ الإصدار المشاهد
+  const handleCloseWhatsNew = (dontShowAgain?: boolean) => {
+    if (currentUser && dontShowAgain) {
+      localStorage.setItem(`edu-doc-last-seen-version-${currentUser}`, FULL_VERSION);
+      localStorage.setItem(`whatsNewDontShow-${FULL_VERSION}`, 'true');
+    }
+    setShowWhatsNew(false);
+  };
+
+  // تنظيف إعدادات "عدم الإظهار" للإصدارات القديمة
+  useEffect(() => {
+    if (currentUser) {
+      // إزالة الإعداد القديم العام إذا كان موجوداً
+      localStorage.removeItem('whatsNewDontShow');
+      
+      // يمكن إضافة منطق إضافي لحذف إعدادات الإصدارات القديمة هنا
+    }
+  }, [currentUser]);
+
   const userSettingsKey = 'student-gradebook-settings-' + currentUser;
   const userClassesKey = 'student-gradebook-classes-' + currentUser;
   
@@ -70,29 +107,10 @@ const App: React.FC = () => {
   const [showImportTemplateModal, setShowImportTemplateModal] = useState(false);
   const [templateToExport, setTemplateToExport] = useState<Template | null>(null);
   const [templates, setTemplates] = useLocalStorage<Template[]>('column-templates-' + currentUser, []);
-  const availableColors = [
-    '#10b981', '#2563eb', '#f59e42', '#e11d48', '#64748b', '#fbbf24', '#a21caf', '#f472b6',
-    '#f87171', '#facc15', '#4ade80', '#22d3ee', '#818cf8', '#c026d3', '#0ea5e9', '#f43f5e',
-    '#a3e635', '#f472b6', '#fbbf24', '#6366f1', '#14b8a6', '#eab308', '#fca5a5', '#a7f3d0',
-    '#fcd34d', '#f9fafb', '#d1fae5', '#f3e8ff', '#fef3c7', '#f1f5f9', '#fde68a', '#7dd3fc',
-    '#c7d2fe', '#fbcfe8', '#fef9c3', '#bbf7d0', '#e0e7ff', '#f5d0fe', '#fef2f2', '#e0e7ff',
-    '#f3e8ff', '#fef3c7', '#f1f5f9', '#fbbf24', '#f59e42', '#a21caf', '#e11d48', '#2563eb',
-    '#10b981', '#64748b', '#f472b6', '#f87171', '#facc15', '#4ade80', '#22d3ee', '#818cf8',
-    '#c026d3', '#0ea5e9', '#f43f5e', '#a3e635', '#fbbf24', '#6366f1', '#14b8a6', '#eab308',
-    '#fca5a5', '#a7f3d0', '#fcd34d', '#f9fafb', '#d1fae5', '#f3e8ff', '#fef3c7', '#f1f5f9',
-    '#fde68a', '#7dd3fc', '#c7d2fe', '#fbcfe8', '#fef9c3', '#bbf7d0', '#e0e7ff', '#f5d0fe',
-    '#fef2f2', '#e0e7ff', '#f3e8ff', '#fef3c7', '#f1f5f9',
-    '#ffb300', '#ff7043', '#8d6e63', '#789262', '#00bcd4', '#d4e157', '#ff8a65', '#ba68c8',
-    '#ffd600', '#ff5252', '#607d8b', '#00e676', '#ff1744', '#b2ff59', '#00bfae', '#ffea00',
-    '#ff4081', '#b388ff', '#c51162', '#00bcd4', '#ffab00', '#cddc39', '#ff6d00', '#aeea00',
-    '#00e5ff', '#ff80ab', '#ea80fc', '#b2dfdb', '#ffccbc', '#d7ccc8', '#c8e6c9', '#f0f4c3',
-    '#b3e5fc', '#b2ebf2', '#b2dfdb', '#c8e6c9', '#dcedc8', '#f8bbd0', '#f48fb1', '#ce93d8',
-    '#b39ddb', '#9fa8da', '#90caf9', '#81d4fa', '#80deea', '#80cbc4', '#a5d6a7', '#c5e1a5',
-    '#e6ee9c', '#fff59d', '#ffe082', '#ffcc80', '#ffab91', '#bcaaa4', '#eeeeee', '#bdbdbd',
-    '#9e9e9e', '#757575', '#616161', '#424242', '#212121',
-    '#fff', '#000'
-  ];
-  const colorStorageKey = 'student-gradebook-color-' + (currentUser || 'default');
+  
+  // const availableColors = [...]; // محذوف لتوفير المساحة
+  // const colorStorageKey = 'student-gradebook-color-' + (currentUser || 'default'); // غير مستخدم
+  
   const [pendingColor, setPendingColor] = useState<string | null>(null);
   const [activeClassId, setActiveClassId] = useState(() => {
     const saved = localStorage.getItem('activeClassId');
@@ -445,7 +463,6 @@ const App: React.FC = () => {
       <Header
         settings={settings}
         currentUser={currentUser || ''}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
         onLogout={() => {
           setCurrentUser(null);
           sessionStorage.removeItem('gradebook-user');
@@ -724,7 +741,7 @@ const App: React.FC = () => {
       )}
 
       {/* نافذة ما الجديد */}
-      <WhatsNewModal />
+      <WhatsNewModal isOpen={showWhatsNew} onClose={handleCloseWhatsNew} />
     </div>
   );
 }

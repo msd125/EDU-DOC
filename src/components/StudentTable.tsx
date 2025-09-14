@@ -4,7 +4,6 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { getContrastColor, getHeaderBg } from '../utils/colorUtils';
 import EditColumnModal from './EditColumnModal';
-import SimpleModal from './SimpleModal';
 import DraggableColumns from './DraggableColumns';
 import '../styles/draggable-columns.css';
 import { saveColumnOrder, getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
@@ -74,17 +73,6 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
   // State for editing column
   const [editingColumn, setEditingColumn] = useState<ColumnType | null>(null);
   
-  // State for delete confirmation modal (للأعمدة وجميع الطلاب فقط)
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    type: 'column' | 'all-students';
-    item?: ColumnType;
-    title?: string;
-  }>({
-    isOpen: false,
-    type: 'column'
-  });
-  
   // Ordered columns state
   const [orderedColumns, setOrderedColumns] = useState<ColumnType[]>(() => {
     const savedOrder = getColumnOrder();
@@ -134,27 +122,11 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
     }
   });
 
-  // Handle delete confirmation (للأعمدة فقط)
-  const handleDeleteConfirm = () => {
-    if (deleteModal.type === 'column' && deleteModal.item && onDeleteColumn) {
-      const column = deleteModal.item as ColumnType;
-      onDeleteColumn(column.id, column.name);
-      toast.success(`✅ تم حذف العمود: ${column.name}`);
-    }
-    
-    setDeleteModal({ isOpen: false, type: 'column' });
-  };
-
-  // Handle column delete with modal
+  // Handle column delete - استدعاء مباشر لدالة App.tsx (بدون مودال محلي)
   const handleColumnDelete = (id: string | number, name: string) => {
-    const column = columns.find(c => c.id === id);
-    if (column) {
-      setDeleteModal({
-        isOpen: true,
-        type: 'column',
-        item: column,
-        title: 'حذف عمود'
-      });
+    // استدعاء دالة الحذف مباشرة من App.tsx التي تظهر رسالة تأكيد واحدة فقط
+    if (onDeleteColumn) {
+      onDeleteColumn(id, name);
     }
   };
   
@@ -454,22 +426,6 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
             onEditColumn(editingColumn!.id, updatedData);
             setEditingColumn(null);
           }}
-        />
-      )}
-
-      {/* Delete Confirmation Popup */}
-      {deleteModal.isOpen && (
-        <SimpleModal
-          isOpen={deleteModal.isOpen}
-          onClose={() => {
-            setDeleteModal({ isOpen: false, type: 'column' });
-          }}
-          onConfirm={handleDeleteConfirm}
-          title={deleteModal.title || 'تأكيد الحذف'}
-          message={`هل أنت متأكد من حذف العمود؟
-
-سيتم حذف العمود وجميع البيانات المرتبطة به
-هذا الإجراء لا يمكن التراجع عنه`}
         />
       )}
       
