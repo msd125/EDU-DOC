@@ -183,8 +183,8 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
         {/* خلفية متحركة مع تدرج ألوان */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl relative overflow-hidden">
           {/* تأثيرات بريق متعددة */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform -skew-x-12 animate-ping"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400 via-transparent to-transparent opacity-10 animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform -skew-x-12 animate-ping pointer-events-none"></div>
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400 via-transparent to-transparent opacity-10 animate-pulse pointer-events-none"></div>
           
           <div className="flex justify-between items-center relative z-10">
             <div>
@@ -206,7 +206,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
 
         <div className="p-4 sm:p-6 relative">
           {/* خلفية احتفالية خفيفة */}
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-pink-50 to-blue-50 opacity-30 rounded-b-xl sm:rounded-b-2xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-pink-50 to-blue-50 opacity-30 rounded-b-xl sm:rounded-b-2xl pointer-events-none"></div>
           
           <div className="space-y-4 sm:space-y-6 relative z-10">
             {/* ميزة استيراد الطلاب الجديدة */}
