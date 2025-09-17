@@ -495,22 +495,21 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
           // PDF
           if (col.type === ColumnType.CHECKBOX) {
             let ch = typeof value === 'string' ? value : (value === true ? '1' : (value === false ? '2' : '0'));
-            if (ch === '1') return '<span style="font-size:18px;font-weight:bold;color:#16a34a;display:inline-block;text-align:center;">✔</span>';
-            if (ch === '2') return '<span style="font-size:18px;font-weight:bold;color:#dc2626;display:inline-block;text-align:center;">✗</span>';
-            return '<span style="font-size:18px;font-weight:bold;color:#64748b;display:inline-block;text-align:center;">–</span>';
+            if (ch === '1') return `<span style="display:inline-block;width:24px;height:24px;border:1.5px solid #16a34a;background:#d1fae5;border-radius:6px;text-align:center;vertical-align:middle;line-height:24px;font-size:18px;font-weight:bold;color:#16a34a;">✔</span>`;
+            if (ch === '2') return `<span style="display:inline-block;width:24px;height:24px;border:1.5px solid #dc2626;background:#fee2e2;border-radius:6px;text-align:center;vertical-align:middle;line-height:24px;font-size:18px;font-weight:bold;color:#dc2626;">✗</span>`;
+            return `<span style="display:inline-block;width:24px;height:24px;border:1.5px solid #cbd5e1;background:#f1f5f9;border-radius:6px;text-align:center;vertical-align:middle;line-height:24px;font-size:18px;font-weight:bold;color:#64748b;">–</span>`;
           }
           if (col.type === ColumnType.MULTI_CHECKBOX) {
             const slots = Math.max(1, Number((col as any).multiSlots) || 8);
             const raw: string = typeof value === 'string' ? value : ''.padEnd(slots, '0');
             const normalized = raw.split('').map(ch => (ch === '1' || ch === '2') ? ch : '0').join('');
             const arr = normalized.padEnd(slots, '0').slice(0, slots).split('');
-            const symbols = arr.map(ch => ch === '1'
-              ? '<span style="font-size:16px;font-weight:bold;color:#16a34a;display:inline-block;text-align:center;">✔</span>'
-              : ch === '2'
-                ? '<span style="font-size:16px;font-weight:bold;color:#dc2626;display:inline-block;text-align:center;">✗</span>'
-                : '<span style="font-size:16px;font-weight:bold;color:#64748b;display:inline-block;text-align:center;">–</span>'
-            ).join('');
-            return symbols;
+            const symbols = arr.map(ch => {
+              if (ch === '1') return `<span style="display:inline-block;width:24px;height:24px;border:1.5px solid #16a34a;background:#d1fae5;border-radius:6px;text-align:center;vertical-align:middle;line-height:24px;font-size:18px;font-weight:bold;color:#16a34a;margin:1px;">✔</span>`;
+              if (ch === '2') return `<span style="display:inline-block;width:24px;height:24px;border:1.5px solid #dc2626;background:#fee2e2;border-radius:6px;text-align:center;vertical-align:middle;line-height:24px;font-size:18px;font-weight:bold;color:#dc2626;margin:1px;">✗</span>`;
+              return `<span style="display:inline-block;width:24px;height:24px;border:1.5px solid #cbd5e1;background:#f1f5f9;border-radius:6px;text-align:center;vertical-align:middle;line-height:24px;font-size:18px;font-weight:bold;color:#64748b;margin:1px;">–</span>`;
+            }).join('');
+            return `<div style="display:flex;gap:2px;justify-content:center;align-items:center;">${symbols}</div>`;
           }
         }
         return value.toString();
