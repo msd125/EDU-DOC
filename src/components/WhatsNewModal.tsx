@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FULL_VERSION } from '../utils/version';
 
 interface WhatsNewModalProps {
   isOpen: boolean;
@@ -180,8 +181,8 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto relative border-2 sm:border-4 border-gradient-to-r border-pink-300">
-        {/* خلفية متحركة مع تدرج ألوان */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl relative overflow-hidden">
+    {/* خلفية متحركة مع تدرج ألوان (لوحة جديدة مميزة عن السابقة) */}
+  <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-400 text-white p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl relative overflow-hidden">
           {/* تأثيرات بريق متعددة */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform -skew-x-12 animate-ping pointer-events-none"></div>
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400 via-transparent to-transparent opacity-10 animate-pulse pointer-events-none"></div>
@@ -189,7 +190,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
           <div className="flex justify-between items-center relative z-10">
             <div>
               <h2 className="text-lg sm:text-2xl font-bold mb-2">
-                🎉✨ ما الجديد في الإصدار 2.1.0 ✨🎉
+                🎉✨ ما الجديد في الإصدار {FULL_VERSION} ✨🎉
               </h2>
               <p className="opacity-90 text-sm sm:text-lg">تحديثات مهمة لتحسين تجربتك 🚀</p>
             </div>
@@ -209,45 +210,92 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-pink-50 to-blue-50 opacity-30 rounded-b-xl sm:rounded-b-2xl pointer-events-none"></div>
           
           <div className="space-y-4 sm:space-y-6 relative z-10">
-            {/* ميزة استيراد الطلاب الجديدة */}
+            {/* ميزة ثورية: مجموعة مربعات (ألوان جديدة تختلف عن السابقة) */}
+            <div className="rounded-xl sm:rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-4 sm:p-6 shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-white bg-emerald-600 px-2 py-0.5 rounded-full">جديد كليًا</span>
+                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">ثوري</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-emerald-800 mb-1">مجموعة مربعات (Multi‑Checkbox)</h3>
+                  <p className="text-sm sm:text-base text-slate-700 mb-3">
+                    صمّم خانة واحدة تحتوي عدة مربعات داخلها، بثلاث حالات (صح ✓ / خطأ ✗ / فارغ –)، وحدد بسهولة عدد الخانات والعناوين، مع عدّاد اختياري.
+                  </p>
+                  <ul className="text-sm text-slate-700 space-y-1 list-disc ms-4">
+                    <li>اختيار عدد الخانات (1 إلى أي عدد يناسبك)</li>
+                    <li>عداد تلقائي لعدد الخانات المستخدمة (مثلاً 4/8)</li>
+                    <li>تسميات اختيارية لكل خانة (أسبوع 1، أسبوع 2...)</li>
+                    <li>عرض رائع في التقارير: رموز كبيرة وواضحة بالألوان</li>
+                  </ul>
+                </div>
+                {/* معاينة مرئية بسيطة */}
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  <div className="mx-auto sm:ms-0 w-full max-w-[320px] bg-white/70 border border-emerald-200 rounded-xl p-3 shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-slate-600">عدد الخانات: 8</span>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">4/8</span>
+                    </div>
+                    <div className="grid grid-cols-8 gap-1.5">
+                      {/* صف معاينة لمربعات بثلاث حالات */}
+                      <div className="w-6 h-6 rounded border border-emerald-600 bg-[rgba(22,163,74,0.13)] flex items-center justify-center text-emerald-700 text-sm">✔</div>
+                      <div className="w-6 h-6 rounded border border-red-600 bg-[rgba(255,26,26,0.18)] flex items-center justify-center text-red-700 text-sm">✗</div>
+                      <div className="w-6 h-6 rounded border border-slate-300 bg-white flex items-center justify-center text-slate-500 text-sm">–</div>
+                      <div className="w-6 h-6 rounded border border-emerald-600 bg-[rgba(22,163,74,0.13)] flex items-center justify-center text-emerald-700 text-sm">✔</div>
+                      <div className="w-6 h-6 rounded border border-red-600 bg-[rgba(255,26,26,0.18)] flex items-center justify-center text-red-700 text-sm">✗</div>
+                      <div className="w-6 h-6 rounded border border-slate-300 bg-white flex items-center justify-center text-slate-500 text-sm">–</div>
+                      <div className="w-6 h-6 rounded border border-emerald-600 bg-[rgba(22,163,74,0.13)] flex items-center justify-center text-emerald-700 text-sm">✔</div>
+                      <div className="w-6 h-6 rounded border border-slate-300 bg-white flex items-center justify-center text-slate-500 text-sm">–</div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-4 gap-1 text-[10px] text-slate-500">
+                      <span className="truncate">أسبوع 1</span>
+                      <span className="truncate">أسبوع 2</span>
+                      <span className="truncate">أسبوع 3</span>
+                      <span className="truncate">أسبوع 4</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      try {
+                        // إغلاق المودال ثم إرسال حدث اختياري يمكن للتطبيق الاستماع له
+                        handleClose();
+                        setTimeout(() => window.dispatchEvent(new Event('try-multi-checkbox')), 0);
+                      } catch {}
+                    }}
+                    className="mt-3 w-full bg-emerald-600 hover:bg-green-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow"
+                    title="جرّب إضافة عمود مجموعة مربعات الآن"
+                  >
+                    جرّبها الآن
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ملاحظات هذا الإصدار (لون مختلف عن السابق) */}
             <div className="border-2 border-green-300 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg sm:rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all transform hover:scale-105 hover:border-green-400">
               <div className="flex items-start gap-3 sm:gap-4">
                 <div className="text-2xl sm:text-4xl animate-pulse">✨</div>
                 <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-bold text-green-800 mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                    <span>استيراد الطلاب بطريقة سهلة</span>
-                    <span className="text-xs sm:text-sm bg-green-200 text-green-800 px-2 py-1 rounded-full self-start">جديد!</span>
-                  </h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-green-800 mb-2 sm:mb-3">تحسينات واجهة وتقارير</h3>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li className="flex items-start gap-2 text-gray-600">
-                      <span className="text-xs sm:text-sm mt-1">📝</span>
-                      <span className="text-xs sm:text-sm">إمكانية لصق أسماء الطلاب مباشرة من الحافظة</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-gray-600">
-                      <span className="text-sm mt-1">🔄</span>
-                      <span className="text-sm">تحليل ذكي للنصوص المنسقة بطرق مختلفة</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-gray-600">
-                      <span className="text-sm mt-1">⚡</span>
-                      <span className="text-sm">دعم الأسماء المفصولة بفواصل أو أسطر جديدة</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-gray-600">
-                      <span className="text-sm mt-1">📋</span>
-                      <span className="text-sm">واجهة بسيطة لاختيار طريقة الاستيراد</span>
-                    </li>
+                    <li className="flex items-start gap-2 text-gray-600"><span className="text-xs sm:text-sm mt-1">🧭</span><span className="text-xs sm:text-sm">تحسين محاذاة الجدول مع البادنق الأيسر (RTL)</span></li>
+                    <li className="flex items-start gap-2 text-gray-600"><span className="text-sm mt-1">🧾</span><span className="text-sm">توسيط كل الحقول في PDF ما عدا الاسم</span></li>
+                    <li className="flex items-start gap-2 text-gray-600"><span className="text-sm mt-1">🪲</span><span className="text-sm">إصلاحات تمنع الشاشة البيضاء عند تغيير نوع العمود</span></li>
+                    <li className="flex items-start gap-2 text-gray-600"><span className="text-sm mt-1">🧩</span><span className="text-sm">حل مشكلة "Rendered more hooks" في إدارة الأعمدة</span></li>
+                    <li className="flex items-start gap-2 text-gray-600"><span className="text-sm mt-1">☑️</span><span className="text-sm">إضافة نوع عمود جديد: مجموعة مربعات (Multi‑Checkbox) مع إمكانية اختيار عدد المربعات والعناوين</span></li>
                   </ul>
                 </div>
               </div>
             </div>
             
             {/* تحسينات تقنية */}
-            <div className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all transform hover:scale-105 hover:border-blue-400">
+            <div className="border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg sm:rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all transform hover:scale-105 hover:border-emerald-400">
               <div className="flex items-start gap-3 sm:gap-4">
                 <div className="text-2xl sm:text-4xl animate-pulse">🛠️</div>
                 <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-bold text-blue-800 mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-emerald-800 mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                     <span>تحسينات تقنية وأداء</span>
-                    <span className="text-xs sm:text-sm bg-blue-200 text-blue-800 px-2 py-1 rounded-full self-start">محدث!</span>
+                    <span className="text-xs sm:text-sm bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full self-start">محدث!</span>
                   </h3>
                   <ul className="space-y-1 sm:space-y-2">
                     <li className="flex items-start gap-2 text-gray-600">
@@ -302,7 +350,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
 
           {/* نصيحة للاستخدام */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="text-2xl">💡</div>
                 <div>
@@ -322,7 +370,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                 type="checkbox"
                 checked={dontShowAgain}
                 onChange={(e) => setDontShowAgain(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
               />
               عدم إظهار هذه الرسالة مرة أخرى
             </label>

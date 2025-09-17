@@ -1,7 +1,6 @@
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, Class, ColumnType, Column, Student, Template } from './types';
-import StudentTableSimple from './components/StudentTableSimple';
 import StudentDataView from './components/StudentDataView';
 import CustomizeDrawer from './components/CustomizeDrawer';
 import Header from './components/Header';
@@ -20,6 +19,7 @@ import ImportTemplateModal from './components/ImportTemplateModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import WhatsNewModal from './components/WhatsNewModal';
 import Login from './components/Login';
+import ErrorBoundary from './components/ErrorBoundary';
 import { FULL_VERSION } from './utils/version';
 
 const App: React.FC = () => {
@@ -184,9 +184,46 @@ const App: React.FC = () => {
       }
     });
   };
-  const fillColumn = (classId: string, _subjectId: string, columnId: string, value: any) => {
+  const fillColumn = (classId: string, subjectId: string, columnId: string, value: any) => {
     setClasses((prev: Class[]) => prev.map((c: Class) => {
       if (c.id !== classId) return c;
+      // إيجاد إعدادات العمود لمعرفة إن كان مجموعة مربعات
+      const subject = c.subjects.find((s: any) => s.id === subjectId);
+      const col = subject?.columns.find((col: any) => String(col.id) === String(columnId));
+  const colType = col?.type as any;
+  const isMC = !!col && (colType === ColumnType.MULTI_CHECKBOX || colType === 'MULTI_CHECKBOX' || colType === 'مجموعة مربعات');
+      const slots = isMC ? Math.max(1, Number(col.multiSlots) || 8) : 0;
+      // دعم حمولات خاصة: { __mcSlotUpdate: { index, value } } و { __mcClear: true }
+      if (isMC && value && typeof value === 'object' && !Array.isArray(value)) {
+        // تحديث خانة واحدة لكل الصفوف
+        if (value.__mcSlotUpdate && typeof value.__mcSlotUpdate.index === 'number' && typeof value.__mcSlotUpdate.value === 'string') {
+          const idx = Math.max(0, Math.min(slots - 1, value.__mcSlotUpdate.index));
+          const newCh = (value.__mcSlotUpdate.value === '1' || value.__mcSlotUpdate.value === '2') ? value.__mcSlotUpdate.value : '0';
+          return {
+            ...c,
+            students: c.students.map((s: Student) => {
+              const raw = s.records[columnId];
+              const prev = typeof raw === 'string' ? raw : ''.padEnd(slots, '0');
+              const padded = prev.padEnd(slots, '0').slice(0, slots).split('');
+              padded[idx] = newCh; // غيّر فقط الخانة المطلوبة
+              const next = padded.join('');
+              return { ...s, records: { ...s.records, [columnId]: next } };
+            })
+          };
+        }
+        // تفريغ كل الخانات
+        if (value.__mcClear) {
+          const zero = ''.padEnd(slots, '0');
+          return {
+            ...c,
+            students: c.students.map((s: Student) => ({
+              ...s,
+              records: { ...s.records, [columnId]: zero }
+            }))
+          };
+        }
+      }
+      // السلوك الافتراضي: تعيين القيمة كما هي لكل الصفوف (للأنواع الأخرى)
       return {
         ...c,
         students: c.students.map((s: Student) => ({
@@ -195,14 +232,14 @@ const App: React.FC = () => {
         }))
       };
     }));
-    toast.success('تم تعبئة العمود بنجاح.');
+    toast.success('تم تطبيق التعميم على العمود.');
   };
-  const addColumn = (classId: string, subjectId: string, name: string, type: ColumnType, options?: string[]) => {
+  const addColumn = (classId: string, subjectId: string, name: string, type: ColumnType, options?: string[], extra?: { multiSlots?: number; multiShowCounter?: boolean; multiLabels?: string[] }) => {
     setClasses((prev: Class[]) => prev.map((c: Class) => c.id === classId ? {
       ...c,
       subjects: c.subjects.map((s: any) => s.id === subjectId ? {
         ...s,
-        columns: [...s.columns, { id: Date.now().toString() + '-' + Math.random(), name, type, options }]
+        columns: [...s.columns, { id: Date.now().toString() + '-' + Math.random(), name, type, options, ...(extra||{}) }]
       } : s)
     } : c));
     toast.success('تمت إضافة العمود بنجاح.');
@@ -230,15 +267,134 @@ const App: React.FC = () => {
       }
     });
   };
-  const editColumn = (classId: string, subjectId: string, columnId: string, updatedData: { name?: string }) => {
-    setClasses((prev: Class[]) => prev.map((c: Class) => c.id === classId ? {
-      ...c,
-      subjects: c.subjects.map((s: any) => s.id === subjectId ? {
-        ...s,
-        columns: s.columns.map((col: any) => col.id === columnId ? { ...col, ...updatedData } : col)
-      } : s)
-    } : c));
-    if (updatedData.name) toast.success('تم تعديل اسم العمود.');
+  const editColumn = (classId: string, subjectId: string, columnId: string, updatedData: Partial<Column>) => {
+    try {
+      console.log('editColumn called:', { classId, subjectId, columnId, updatedData });
+      
+      setClasses((prev: Class[]) => prev.map((c: Class) => {
+        if (c.id !== classId) return c;
+        
+        console.log('Processing class:', c.id);
+        
+        let oldSlots = 0;
+        let newSlots = 0;
+        let oldType: ColumnType | null = null;
+        let newType: ColumnType | null = null;
+        
+        const updatedSubjects = c.subjects.map((s: any) => {
+          if (s.id !== subjectId) return s;
+          
+          console.log('Processing subject:', s.id);
+          
+          const updatedColumns = s.columns.map((col: any) => {
+            if (col.id !== columnId) return col;
+            
+            console.log('Processing column:', col.id, 'old type:', col.type, 'new type:', updatedData.type);
+            
+            // احفظ النوع القديم والجديد
+            oldType = col.type;
+            newType = updatedData.type || col.type;
+            
+            // احفظ القديم والجديد لعدد الخانات لو تم تغييره
+            if (col.type === ColumnType.MULTI_CHECKBOX) {
+              oldSlots = Number(col.multiSlots) || 8;
+            }
+            
+            let merged = { ...col, ...updatedData } as Column;
+            
+            // إذا لم يعد النوع مجموعة مربعات، احذف إعداداتها
+            if (merged.type !== ColumnType.MULTI_CHECKBOX) {
+              console.log('Removing multi-checkbox settings');
+              delete merged.multiSlots;
+              delete merged.multiShowCounter;
+              delete merged.multiLabels;
+            } else {
+              newSlots = Math.max(1, Math.min(64, Number((updatedData as any).multiSlots ?? merged.multiSlots ?? 8)));
+              merged.multiSlots = newSlots;
+              console.log('Multi-checkbox slots:', newSlots);
+            }
+            
+            return merged;
+          });
+          return { ...s, columns: updatedColumns };
+        });
+
+        // إذا تغير عدد الخانات، نقوم بترحيل قيم الطلاب (قص أو إكمال بالأصفار)
+        let students = c.students;
+        if (oldSlots && newSlots && oldSlots !== newSlots) {
+          console.log('Migrating student data for slot change:', oldSlots, '->', newSlots);
+          students = c.students.map((stu: Student) => {
+            try {
+              const raw = stu.records[columnId];
+              const bitstr = typeof raw === 'string' ? raw : ''.padEnd(oldSlots, '0');
+              let migrated = bitstr.padEnd(oldSlots, '0');
+              if (newSlots < oldSlots) {
+                migrated = migrated.slice(0, newSlots);
+              } else if (newSlots > oldSlots) {
+                migrated = migrated.padEnd(newSlots, '0');
+              }
+              return { ...stu, records: { ...stu.records, [columnId]: migrated } };
+            } catch (err) {
+              console.error('Error migrating student data for student:', stu.id, err);
+              return stu; // إرجاع الطالب كما هو في حالة الخطأ
+            }
+          });
+        }
+        
+        // إذا تغير النوع من أو إلى مجموعة مربعات، نظف البيانات
+        if (oldType && newType && oldType !== newType) {
+          console.log('Type changed from', oldType, 'to', newType, '- cleaning student data');
+          students = c.students.map((stu: Student) => {
+            try {
+              const newRecords = { ...stu.records };
+              
+              // إذا تغير من مجموعة مربعات إلى نوع آخر
+              if (oldType === ColumnType.MULTI_CHECKBOX && newType !== ColumnType.MULTI_CHECKBOX) {
+                console.log('Clearing multi-checkbox data for student:', stu.id);
+                delete newRecords[columnId];
+              }
+              // إذا تغير من نوع آخر إلى مجموعة مربعات
+              else if (oldType !== ColumnType.MULTI_CHECKBOX && newType === ColumnType.MULTI_CHECKBOX) {
+                console.log('Initializing multi-checkbox data for student:', stu.id);
+                newRecords[columnId] = ''.padEnd(newSlots || 8, '0');
+              }
+              // إذا تغير من مربع اختيار إلى نوع آخر أو العكس
+              else if (oldType === ColumnType.CHECKBOX || newType === ColumnType.CHECKBOX) {
+                console.log('Handling checkbox type change for student:', stu.id);
+                if (newType === ColumnType.CHECKBOX) {
+                  // تهيئة مربع اختيار بقيمة فارغة
+                  newRecords[columnId] = '0';
+                } else {
+                  // مسح بيانات مربع الاختيار
+                  delete newRecords[columnId];
+                }
+              }
+              
+              return { ...stu, records: newRecords };
+            } catch (err) {
+              console.error('Error updating student records for student:', stu.id, err);
+              return stu; // إرجاع الطالب كما هو في حالة الخطأ
+            }
+          });
+        }
+
+        console.log('Updated class data successfully');
+        return { ...c, subjects: updatedSubjects, students };
+      }));
+
+      if (updatedData.name) toast.success('تم تعديل اسم العمود.');
+      if (updatedData.type === ColumnType.MULTI_CHECKBOX || updatedData.multiSlots !== undefined) {
+        toast.success('تم تحديث إعدادات مجموعة المربعات.');
+      }
+      
+      console.log('editColumn completed successfully');
+    } catch (error) {
+      console.error('Error in editColumn:', error);
+      toast.error('حدث خطأ أثناء تعديل العمود. يرجى المحاولة مرة أخرى.');
+      
+      // في حالة الخطأ، لا نقوم بأي تحديث على البيانات
+      throw error; // إعادة رمي الخطأ لـ ErrorBoundary
+    }
   };
   const importStudents = (classId: string, subjectId: string, importedData: any[], studentNameColumn: string, columnsToImport: { header: string, type: ColumnType, options?: string[] }[]) => {
     setClasses((prev: Class[]) => prev.map((c: Class) => {
@@ -458,7 +614,8 @@ const App: React.FC = () => {
   }
 
   return (
-  <div className="min-h-screen flex flex-col bg-slate-50">
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col bg-slate-50">
       {/* الهيدر أعلى الصفحة */}
       <Header
         settings={settings}
@@ -647,8 +804,8 @@ const App: React.FC = () => {
       {showAddColumnModal && activeClass && activeSubject && (
         <AddColumnModal
           onClose={() => setShowAddColumnModal(false)}
-          onAddColumn={(name, type, options) => {
-            addColumn(activeClass.id, activeSubject.id, name, type, options);
+          onAddColumn={(name, type, options, extra) => {
+            addColumn(activeClass.id, activeSubject.id, name, type, options, extra);
             setShowAddColumnModal(false);
           }}
         />
@@ -743,6 +900,7 @@ const App: React.FC = () => {
       {/* نافذة ما الجديد */}
       <WhatsNewModal isOpen={showWhatsNew} onClose={handleCloseWhatsNew} />
     </div>
+    </ErrorBoundary>
   );
 }
 

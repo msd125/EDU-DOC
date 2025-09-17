@@ -10,7 +10,7 @@ import ImportStudentsModal from './ImportStudentsModal';
 import AddStudentModal from './AddStudentModal';
 import SimpleModal from './SimpleModal';
 import { ClipboardListIcon, ChevronRightIcon, ChevronLeftIcon } from './Icons';
-import { getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils';
+import { getColumnOrder, orderColumns } from '../utils/drag-drop/columnUtils.js';
 
 // تم الاستغناء عن الزر العائم لصالح شريط الأدوات العلوي
 
@@ -20,7 +20,7 @@ declare const XLSX: any;
 interface StudentDataViewProps {
   activeClass: Class | undefined;
   activeSubject: Subject | undefined;
-  onAddColumn: (classId: string, subjectId: string, name: string, type: ColumnType, options?: string[]) => void;
+  onAddColumn: (classId: string, subjectId: string, name: string, type: ColumnType, options?: string[], extra?: { multiSlots?: number; multiShowCounter?: boolean; multiLabels?: string[] }) => void;
   onDeleteColumn: (classId: string, subjectId: string, columnId: string, columnName: string) => void;
   onEditColumn: (classId: string, subjectId: string, columnId: string, updatedData: Partial<any>) => void;
   onFillColumn: (classId: string, subjectId: string, columnId: string, value: any) => void;
@@ -55,7 +55,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   // تصدير كشف الإدارة المدرسية إلى PDF (بسيط عبر نافذة طباعة)
   const handleExportAdminPdf = () => {
     if (!activeClass || !activeSubject) return;
-    const reportData = generateReportData();
+  const reportData = generateReportData('pdf');
     if (!reportData) return;
     const { tableHeader, body } = reportData;
     // School header
@@ -80,10 +80,10 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     }
     html += `<table border='1' cellspacing='0' cellpadding='4' style='width:100%;border-collapse:collapse;margin-bottom:24px;'>`;
     // دالة التباين
-    function getContrastColor(hex) {
+    function getContrastColor(hex: string) {
       if (!hex) return '#fff';
       let c = hex.replace('#', '');
-      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length === 3) c = c.split('').map((x: string) => x + x).join('');
       const num = parseInt(c, 16);
       const r = (num >> 16) & 255;
       const g = (num >> 8) & 255;
@@ -98,12 +98,13 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         const key = `colorfulcell-${studentId}-${colId}`;
         const data = localStorage.getItem(key);
         if (!data) return '';
-        const { bgColor, textColor, fontSize, textAlign } = JSON.parse(data);
+        const { bgColor, textColor, fontSize } = JSON.parse(data);
         let style = '';
         if (bgColor) style += `background:${bgColor};`;
         if (textColor) style += `color:${textColor};`;
         if (fontSize) style += `font-size:${fontSize};`;
-        if (textAlign) style += `text-align:${textAlign};`;
+        // في PDF، لا نطبق textAlign من التخصيصات - سنفرض التوسيط للجميع ما عدا الأسماء
+        // if (textAlign) style += `text-align:${textAlign};`;
         return style;
       } catch { return ''; }
     }
@@ -117,9 +118,13 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
           return `<td style="border: 1px solid #333; padding: 8px; text-align: ${cellIndex === 1 ? 'right' : 'center'};">${cell}</td>`;
         } else {
           const col = columnsInOrder[cellIndex - 2];
-          // مفتاح الخلية يكون studentId-colId
           const style = getCellStyle(student.id, col.id);
-          return `<td style="border: 1px solid #333; padding: 8px; ${style}">${cell}</td>`;
+          // تكبير رمز × في PDF فقط
+          let cellContent = cell;
+          if (typeof cell === 'string' && cell.includes('×')) {
+            cellContent = cell.replace(/×/g, '<span style="font-size:24px;font-weight:bold;color:#dc2626;display:inline-block;line-height:1;vertical-align:middle;">✗</span>');
+          }
+          return `<td style="border: 1px solid #333; padding: 8px; text-align:center; ${style}">${cellContent}</td>`;
         }
       }).join('') + '</tr>';
     });
@@ -150,7 +155,7 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   // تصدير كشف الإدارة المدرسية بترويسة وتذييل مخصصين
   const handleExportAdminExcel = () => {
     if (!activeClass || !activeSubject) return;
-    const reportData = generateReportData();
+  const reportData = generateReportData('excel');
     if (!reportData) return;
     const { tableHeader, body, themeColor } = reportData;
     const wb = XLSX.utils.book_new();
@@ -270,8 +275,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
     onUpdateStudentData,
     onDeleteStudent,
     settings,
-    apiKey,
-    onRequestApiKey,
+  apiKey: _apiKey,
+  onRequestApiKey: _onRequestApiKey,
     color,
     onAddClass,
     onAddSubject,
@@ -456,9 +461,9 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const savedOrder = getColumnOrder();
   const columnsInOrder = orderColumns(activeSubject?.columns || [], savedOrder);
 
-  const generateReportData = () => {
+  const generateReportData = (exportType: 'pdf' | 'excel' = 'pdf') => {
     if (!activeClass || !activeSubject) return null;
-    // استخدم الأعمدة المرتبة (columnsInOrder) بدلاً من activeSubject.columns
+    // استخدم الأعمدة المرتبة كما هي (بدون توسعة)، وامثل مجموعة المربعات في خلية واحدة مثل (×-✓×)
     const tableHeader = ['م', 'الاسم', ...columnsInOrder.map((c: any) => c.name)];
     const body = activeClass.students.map((student: any, index: number) => [
       (index + 1).toString(),
@@ -466,7 +471,48 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       ...columnsInOrder.map((col: any) => {
         const value = student.records[col.id];
         if (value === null || value === undefined) return '';
-        if (col.type === ColumnType.CHECKBOX) return value ? '✔' : '✗';
+        if (exportType === 'excel') {
+          if (col.type === ColumnType.CHECKBOX) {
+            let ch = typeof value === 'string' ? value : (value === true ? '1' : (value === false ? '2' : '0'));
+            if (ch === '1') return '✔';
+            if (ch === '2') return '✗';
+            return '-';
+          }
+          if (col.type === ColumnType.MULTI_CHECKBOX) {
+            const slots = Math.max(1, Number((col as any).multiSlots) || 8);
+            const raw: string = typeof value === 'string' ? value : ''.padEnd(slots, '0');
+            const normalized = raw.split('').map(ch => (ch === '1' || ch === '2') ? ch : '0').join('');
+            const arr = normalized.padEnd(slots, '0').slice(0, slots).split('');
+            const symbols = arr.map(ch => ch === '1'
+              ? '✔'
+              : ch === '2'
+                ? '✗'
+                : '-'
+            ).join('');
+            return symbols;
+          }
+        } else {
+          // PDF
+          if (col.type === ColumnType.CHECKBOX) {
+            let ch = typeof value === 'string' ? value : (value === true ? '1' : (value === false ? '2' : '0'));
+            if (ch === '1') return '<span style="font-size:18px;font-weight:bold;color:#16a34a;display:inline-block;text-align:center;">✔</span>';
+            if (ch === '2') return '<span style="font-size:18px;font-weight:bold;color:#dc2626;display:inline-block;text-align:center;">✗</span>';
+            return '<span style="font-size:18px;font-weight:bold;color:#64748b;display:inline-block;text-align:center;">–</span>';
+          }
+          if (col.type === ColumnType.MULTI_CHECKBOX) {
+            const slots = Math.max(1, Number((col as any).multiSlots) || 8);
+            const raw: string = typeof value === 'string' ? value : ''.padEnd(slots, '0');
+            const normalized = raw.split('').map(ch => (ch === '1' || ch === '2') ? ch : '0').join('');
+            const arr = normalized.padEnd(slots, '0').slice(0, slots).split('');
+            const symbols = arr.map(ch => ch === '1'
+              ? '<span style="font-size:16px;font-weight:bold;color:#16a34a;display:inline-block;text-align:center;">✔</span>'
+              : ch === '2'
+                ? '<span style="font-size:16px;font-weight:bold;color:#dc2626;display:inline-block;text-align:center;">✗</span>'
+                : '<span style="font-size:16px;font-weight:bold;color:#64748b;display:inline-block;text-align:center;">–</span>'
+            ).join('');
+            return symbols;
+          }
+        }
         return value.toString();
       })
     ]);
@@ -476,10 +522,10 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
   const handleExportToExcel = () => {
     if (!activeClass || !activeSubject) return;
 
-    const reportData = generateReportData();
+  const reportData = generateReportData('excel');
     if (!reportData) return;
 
-    const { tableHeader, body, themeColor } = reportData;
+  const { tableHeader, body, themeColor } = reportData;
 
     const wb = XLSX.utils.book_new();
     wb.Props = {
@@ -630,7 +676,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                   } else {
                     const col = columnsInOrder[cellIndex - 2];
                     const style = getCellStyle(student.id, col.id);
-                    return `<td style="border: 1px solid #333; padding: 8px; ${style}">${cell}</td>`;
+                    // Enforce center alignment for all non-name cells in PDF
+                    return `<td style=\"border: 1px solid #333; padding: 8px; text-align:center; ${style}\">${cell}</td>`;
                   }
                 }).join('')}
               </tr>
@@ -739,15 +786,15 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
               <div className="flex gap-2 mb-4">
                 <div className="flex-[2] flex items-center gap-2">
                   <select className="w-full px-3 py-2 rounded border border-slate-300 bg-slate-50 text-sm" value={adminReportName} onChange={e => setAdminReportName(e.target.value)}>
-                    {reportNames.map((name, idx) => (
+                    {reportNames.map((name: string, idx: number) => (
                       <option key={idx} value={name}>{name}</option>
                     ))}
                   </select>
                   {reportNames.length > 1 && (
                     <button className="text-red-500 hover:text-red-700 text-lg font-extrabold ml-2" style={{fontSize:'1.5rem'}} title="حذف اسم الكشف المحدد" onClick={() => {
-                      const idx = reportNames.findIndex(n => n === adminReportName);
+                      const idx = reportNames.findIndex((n: string) => n === adminReportName);
                       if (idx !== -1 && reportNames.length > 1) {
-                        const newList = reportNames.filter((n, i) => i !== idx);
+                        const newList = reportNames.filter((_n: string, i: number) => i !== idx);
                         setReportNames(newList);
                         setAdminReportName(newList[0] || '');
                       }
@@ -768,15 +815,15 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
                 {adminSigners.map((signer, idx) => (
                   <div key={idx} className="flex gap-2 items-center">
                     <select className="px-2 py-1 rounded border border-slate-300 text-sm bg-white text-slate-700" value={signer.role} onChange={e => updateAdminSigner(idx, { ...signer, role: e.target.value })}>
-                      {roles.map((role, i) => (
+                      {roles.map((role: string, i: number) => (
                         <option key={i} value={role}>{role}</option>
                       ))}
                     </select>
                     {roles.length > 1 && (
                       <button className="text-red-500 hover:text-red-700 text-xs font-bold ml-1" title="حذف المنصب المحدد" onClick={() => {
-                        const idxRole = roles.findIndex(r => r === signer.role);
+                        const idxRole = roles.findIndex((r: string) => r === signer.role);
                         if (idxRole !== -1 && roles.length > 1) {
-                          const newRoles = roles.filter((r, i) => i !== idxRole);
+                          const newRoles = roles.filter((_r: string, i: number) => i !== idxRole);
                           setRoles(newRoles);
                           setAdminSigners(signers => signers.map(s => s.role === signer.role ? { ...s, role: newRoles[0] || '' } : s));
                         }
@@ -818,8 +865,10 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
         </div>
       )}
 
-      <div className="full-page-table w-full h-full flex-1 flex flex-col">
-        <div className="full-page-table-container w-full h-full flex-1 overflow-hidden" style={{ direction: 'rtl' }}>
+      <div className="full-page-table w-full h-full flex-1 flex flex-col pe-3 md:pe-4 relative">
+        {/* Left gutter overlay to align table edge with padding (mask any bleed) */}
+        <div className="absolute inset-y-0 left-0 w-3 md:w-4 bg-white pointer-events-none" aria-hidden="true"></div>
+        <div className="full-page-table-container w-full h-full flex-1 overflow-x-auto overflow-y-hidden" style={{ direction: 'rtl' }}>
           <StudentTable
             columns={columnsInOrder}
             students={paginatedStudents}
@@ -888,8 +937,8 @@ function StudentDataViewImpl(props: StudentDataViewProps & {
       {isAddColumnModalOpen && (
         <AddColumnModal
           onClose={() => setIsAddColumnModalOpen(false)}
-          onAddColumn={(name, type, options) => {
-            onAddColumn(activeClass.id, activeSubject.id, name, type, options);
+          onAddColumn={(name, type, options, extra) => {
+            onAddColumn(activeClass.id, activeSubject.id, name, type, options, extra as any);
             setIsAddColumnModalOpen(false);
           }}
         />

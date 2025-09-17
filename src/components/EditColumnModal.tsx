@@ -11,6 +11,20 @@ const EditColumnModal: React.FC<EditColumnModalProps> = ({ onClose, onSave, colu
   const [name, setName] = useState(column.name);
   const [type, setType] = useState<ColumnType>(column.type);
   const [options, setOptions] = useState(column.options?.join(', ') || '');
+  // إعدادات مجموعة المربعات
+  const [multiSlots, setMultiSlots] = useState<number>((column as any).multiSlots || 8);
+  const [multiShowCounter, setMultiShowCounter] = useState<boolean>(Boolean((column as any).multiShowCounter));
+
+  // عند تغيير نوع العمود، أعد تهيئة إعدادات مجموعة المربعات أو احذفها
+  useEffect(() => {
+    if (type === ColumnType.MULTI_CHECKBOX) {
+      setMultiSlots(8); // دائماً يبدأ بـ 8 عند التحويل
+      setMultiShowCounter(false);
+    } else {
+      setMultiSlots(8);
+      setMultiShowCounter(false);
+    }
+  }, [type]);
 
   useEffect(() => {
     setName(column.name);
@@ -26,7 +40,21 @@ const EditColumnModal: React.FC<EditColumnModalProps> = ({ onClose, onSave, colu
       if (type === ColumnType.LIST && options.trim()) {
         finalOptions = options.split(',').map(opt => opt.trim()).filter(Boolean);
       }
-      onSave({ name: name.trim(), type, options: finalOptions });
+      if (type === ColumnType.MULTI_CHECKBOX) {
+        onSave({
+          name: name.trim(),
+          type,
+          options: finalOptions,
+          multiSlots: Math.max(1, Math.min(64, Number(multiSlots) || 1)),
+          multiShowCounter: Boolean(multiShowCounter)
+        });
+      } else {
+        onSave({
+          name: name.trim(),
+          type,
+          options: finalOptions
+        });
+      }
     }
   };
 
@@ -69,6 +97,31 @@ const EditColumnModal: React.FC<EditColumnModalProps> = ({ onClose, onSave, colu
                   placeholder="مثال: ممتاز, جيد جداً, جيد"
                   className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white"
                 />
+              </div>
+            )}
+            {type === ColumnType.MULTI_CHECKBOX && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">عدد الخانات</label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    min={1}
+                    max={64}
+                    value={multiSlots ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setMultiSlots(val ? Math.max(1, Math.min(64, parseInt(val, 10))) : 1);
+                    }}
+                    className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:placeholder-slate-400 dark:text-white"
+                    placeholder="8"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input id="showCounter" type="checkbox" checked={multiShowCounter} onChange={e => setMultiShowCounter(e.target.checked)} />
+                  <label htmlFor="showCounter" className="text-sm text-slate-700 dark:text-slate-300">عرض العداد داخل الخلية</label>
+                </div>
               </div>
             )}
           </div>

@@ -20,6 +20,7 @@ export enum ColumnType {
   DATE = 'تاريخ',
   CHECKBOX = 'مربع اختيار',
   LIST = 'قائمة',
+  MULTI_CHECKBOX = 'مجموعة مربعات',
 }
 
 export interface Column {
@@ -27,6 +28,10 @@ export interface Column {
   name: string;
   type: ColumnType;
   options?: string[]; // For LIST type
+  // إعدادات اختيارية لنوع مجموعة المربعات
+  multiSlots?: number;         // عدد الخانات داخل الخلية
+  multiShowCounter?: boolean;  // عرض العداد داخل الخلية
+  multiLabels?: string[];      // عناوين اختيارية لكل خانة
 }
 
 export interface Subject {

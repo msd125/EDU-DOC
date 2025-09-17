@@ -3,13 +3,16 @@ import { ColumnType } from '../types';
 
 interface AddColumnModalProps {
   onClose: () => void;
-  onAddColumn: (name: string, type: ColumnType, options?: string[]) => void;
+  onAddColumn: (name: string, type: ColumnType, options?: string[], extra?: { multiSlots?: number; multiShowCounter?: boolean; multiLabels?: string[] }) => void;
 }
 
 const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn }) => {
   const [count, setCount] = useState(1);
   const [type, setType] = useState<ColumnType>(ColumnType.NUMBER);
   const [options, setOptions] = useState('');
+  const [multiSlots, setMultiSlots] = useState<number>(8);
+  const [multiShowCounter, setMultiShowCounter] = useState<boolean>(true);
+  const [multiLabels, setMultiLabels] = useState<string>('');
   const [mainLabel, setMainLabel] = useState('');
   // لم يعد هناك حاجة لقيم منفصلة لكل حقل
 
@@ -26,7 +29,12 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
     }
     if (!mainLabel.trim()) return;
     for (let i = 0; i < count; i++) {
-      onAddColumn(mainLabel.trim(), type, finalOptions);
+      const extra = type === ColumnType.MULTI_CHECKBOX ? {
+        multiSlots: Math.max(1, Number(multiSlots) || 8),
+        multiShowCounter,
+        multiLabels: multiLabels.trim() ? multiLabels.split(',').map(s => s.trim()).filter(Boolean) : undefined
+      } : undefined;
+      onAddColumn(mainLabel.trim(), type, finalOptions, extra);
     }
   };
 
@@ -70,6 +78,22 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
                 {Object.values(ColumnType).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            {type === ColumnType.MULTI_CHECKBOX && (
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">عدد الخانات داخل الخلية</label>
+                  <input type="number" min={1} value={multiSlots} onChange={e=>setMultiSlots(parseInt(e.target.value)||8)} className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:text-white"/>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input id="mcounter" type="checkbox" checked={multiShowCounter} onChange={e=>setMultiShowCounter(e.target.checked)} />
+                  <label htmlFor="mcounter" className="text-sm text-slate-700 dark:text-slate-300">عرض العداد (مثلاً 4/8)</label>
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">تسميات اختيارية (مفصولة بفواصل)</label>
+                  <input type="text" value={multiLabels} onChange={e=>setMultiLabels(e.target.value)} placeholder="أسبوع 1, أسبوع 2, ..." className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:text-white"/>
+                </div>
+              </div>
+            )}
             {type === ColumnType.LIST && (
               <div>
                 <label htmlFor="columnOptions" className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">خيارات القائمة (مفصولة بفاصلة)</label>

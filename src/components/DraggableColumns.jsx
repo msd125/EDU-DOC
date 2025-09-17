@@ -26,6 +26,70 @@ const ItemTypes = {
   COLUMN: 'column'
 };
 
+// مكون منفصل لحقل Multi-Checkbox لتجنب مشكلة hooks
+const MultiCheckboxFillPattern = ({ column, onFillColumn }) => {
+  const slots = Math.max(1, Number(column.multiSlots) || 8);
+  const [pattern, setPattern] = React.useState(''.padEnd(slots, '0'));
+  
+  // حافظ على طول النمط مساويًا لعدد الخانات
+  React.useEffect(() => {
+    setPattern(prev => (prev || '').slice(0, slots).padEnd(slots, '0'));
+  }, [slots]);
+  
+  const toggleAt = (i) => {
+    const arr = pattern.split('');
+    const cur = arr[i];
+    arr[i] = cur === '0' ? '1' : (cur === '1' ? '2' : '0');
+    const next = arr.join('');
+    setPattern(next);
+    const newCh = arr[i];
+    onFillColumn && onFillColumn(column.id, { __mcSlotUpdate: { index: i, value: newCh } });
+  };
+  
+  const clearAll = () => {
+    const zero = ''.padEnd(slots, '0');
+    setPattern(zero);
+    onFillColumn && onFillColumn(column.id, { __mcClear: true });
+  };
+  
+  return (
+    <>
+      <div className="flex flex-wrap gap-[2px] items-center justify-center">
+        {Array.from({ length: slots }).map((_, i) => {
+          const ch = pattern[i] || '0';
+          const isCheck = ch === '1';
+          const isCross = ch === '2';
+          const baseCls = 'w-4 h-4 rounded border flex items-center justify-center text-[9px] select-none';
+          const cls = isCheck
+            ? `${baseCls} bg-emerald-500 border-emerald-600 text-white`
+            : isCross
+              ? `${baseCls} bg-red-500 border-red-600 text-white`
+              : `${baseCls} bg-white border-slate-300 hover:bg-slate-100 text-slate-500`;
+          const symbol = isCheck ? '✓' : (isCross ? '×' : '');
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => toggleAt(i)}
+              className={cls}
+              title={`الخانة ${i + 1}`}
+              aria-label={`الخانة ${i + 1}`}
+            >
+              {symbol}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className="text-[10px] text-slate-400 hover:text-red-500 border px-1 rounded"
+        title="تفريغ الكل"
+        onClick={clearAll}
+      >تفريغ</button>
+    </>
+  );
+};
+
 // مكون عنوان العمود القابل للسحب
 const DraggableHeader = ({ 
   column, 
@@ -177,6 +241,10 @@ const DraggableHeader = ({
               title="تفريغ الكل"
               onClick={() => onFillColumn && onFillColumn(column.id, null)}
             >تفريغ</button>
+          </div>
+        ) : (column.type === 'مجموعة مربعات' || column.type === 'MULTI_CHECKBOX') ? (
+          <div className="flex items-center gap-2 mt-1">
+            <MultiCheckboxFillPattern column={column} onFillColumn={onFillColumn} />
           </div>
         ) : (
           <div className="flex items-center gap-1">

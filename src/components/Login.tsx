@@ -8,8 +8,8 @@ interface LoginProps {
 
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [mobileNumber, setMobileNumber] = useState('0501234567');
-  const [password, setPassword] = useState('123456');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showRegister, setShowRegister] = useState(false);
   const [registerData, setRegisterData] = useState({ name: '', phone: '', password: '', confirm: '' });
@@ -74,20 +74,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }, 300);
   };
 
+  const loginAsDemo = () => {
+    const demoName = 'المستخدم التجريبي';
+    sessionStorage.setItem('gradebook-user', demoName);
+    onLogin(demoName);
+  };
+
   return (
     <>
   <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-100 via-slate-100 to-emerald-200 relative justify-between overflow-x-hidden">
     {/* خلفية زجاجية مع تدرجات وألوان أكثر حيوية */}
     <div className="absolute inset-0 z-0 pointer-events-none">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/60 via-white/60 to-emerald-100/70 blur-xl"></div>
-      <div className="absolute -top-32 -end-32 w-96 h-96 bg-emerald-300/30 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-32 -start-32 w-96 h-96 bg-emerald-400/20 rounded-full blur-2xl"></div>
+  <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/60 via-white/60 to-teal-100/70 blur-xl"></div>
+  <div className="absolute -top-32 -end-32 w-96 h-96 bg-emerald-300/30 rounded-full blur-3xl"></div>
+  <div className="absolute -bottom-32 -start-32 w-96 h-96 bg-teal-400/20 rounded-full blur-2xl"></div>
     </div>
 
     {/* محتوى الصفحة */}
     <main className="flex flex-1 items-center justify-center z-10 w-full px-2 py-8">
         {showRegister ? (
-          <div className="w-full max-w-sm p-8 space-y-6 bg-white/60 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 ring-1 ring-emerald-200/40 relative mx-auto animate-scale-in" style={{boxShadow:'0 8px 32px 0 rgba(34,197,94,0.10), 0 1.5px 8px 0 rgba(16,185,129,0.10)'}}>
+          <div className="w-full max-w-sm p-8 space-y-6 bg-white/60 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 ring-1 ring-emerald-200/40 relative mx-auto animate-scale-in" style={{boxShadow:'0 8px 32px 0 rgba(16,185,129,0.10), 0 1.5px 8px 0 rgba(20,184,166,0.10)'}}>
             <div className="text-center mb-2">
               <h2 className="text-2xl font-bold text-slate-900">تسجيل مستخدم جديد</h2>
             </div>
@@ -110,13 +116,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
               {registerError && <p className="text-sm text-red-500 text-center">{registerError}</p>}
               <div className="flex gap-2">
-                <button type="submit" className="btn-3d w-full px-4 py-2 text-white bg-[#2E8540] rounded-lg hover:bg-[#246b33] focus:ring-4 focus:outline-none focus:ring-green-300 font-medium transition-all duration-300">تسجيل</button>
-                <button type="button" className="btn-3d w-full px-4 py-2 text-[#2E8540] bg-slate-200 rounded-lg hover:bg-slate-300 focus:ring-4 focus:outline-none focus:ring-green-100 font-medium transition-all duration-300" onClick={() => setShowRegister(false)}>إلغاء</button>
+                <button type="submit" className="btn-3d w-full px-4 py-2 text-white bg-[#10B981] rounded-lg hover:bg-[#059669] focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium transition-all duration-300">تسجيل</button>
+                <button type="button" className="btn-3d w-full px-4 py-2 text-[#10B981] bg-slate-200 rounded-lg hover:bg-slate-300 focus:ring-4 focus:outline-none focus:ring-emerald-100 font-medium transition-all duration-300" onClick={() => setShowRegister(false)}>إلغاء</button>
               </div>
             </form>
           </div>
         ) : (
-          <div className="w-full max-w-sm p-8 space-y-6 bg-white/50 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 ring-1 ring-emerald-200/40 relative mx-auto animate-scale-in" style={{boxShadow:'0 8px 32px 0 rgba(34,197,94,0.10), 0 1.5px 8px 0 rgba(16,185,129,0.10)'}}>
+          <div className="w-full max-w-sm p-8 space-y-6 bg-white/50 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 ring-1 ring-emerald-200/40 relative mx-auto animate-scale-in" style={{boxShadow:'0 8px 32px 0 rgba(16,185,129,0.10), 0 1.5px 8px 0 rgba(20,184,166,0.10)'}}>
             <div className="text-center">
               <h1 className="text-4xl font-extrabold text-emerald-700 drop-shadow-sm mb-1">سجلات المعلم</h1>
               <p className="text-emerald-900/80 mt-2 font-medium">مرحباً بك، الرجاء تسجيل الدخول</p>
@@ -136,6 +142,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full ps-10 p-2.5"
                     required
                     placeholder="05xxxxxxxx"
+                    inputMode="numeric"
+                    autoComplete="tel"
                   />
                 </div>
               </div>
@@ -152,15 +160,24 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full ps-10 p-2.5"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
               </div>
               {error && <p className="text-sm text-red-500 text-center">{error}</p>}
               <button
                 type="submit"
-                className="w-full px-4 py-3 text-white bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-400 shadow-lg rounded-xl hover:from-emerald-600 hover:to-emerald-500 focus:ring-4 focus:outline-none focus:ring-emerald-200 font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur"
+                className="w-full px-4 py-3 text-white bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-400 shadow-lg rounded-xl hover:from-emerald-600 hover:to-teal-500 focus:ring-4 focus:outline-none focus:ring-emerald-200 font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur"
               >
                 دخول
+              </button>
+              <button
+                type="button"
+                onClick={loginAsDemo}
+                className="w-full px-4 py-2 mt-2 text-emerald-700 bg-white/70 border border-emerald-100 rounded-xl hover:bg-emerald-50 focus:ring-4 focus:outline-none focus:ring-emerald-100 font-semibold transition-all duration-300"
+                title="تجربة سريعة بدون تسجيل"
+              >
+                دخول كمستخدم تجريبي
               </button>
               <button
                 type="button"
