@@ -307,11 +307,16 @@ const App: React.FC = () => {
               console.log('Removing multi-checkbox settings');
               delete merged.multiSlots;
               delete merged.multiShowCounter;
+              delete (merged as any).multiCountMode;
               delete merged.multiLabels;
             } else {
               newSlots = Math.max(1, Math.min(64, Number((updatedData as any).multiSlots ?? merged.multiSlots ?? 8)));
               merged.multiSlots = newSlots;
               console.log('Multi-checkbox slots:', newSlots);
+              // اضبط وضع العد الافتراضي إذا لم يكن محددًا
+              if (!(merged as any).multiCountMode) {
+                (merged as any).multiCountMode = 'both';
+              }
             }
             
             return merged;

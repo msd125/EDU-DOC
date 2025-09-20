@@ -5,6 +5,7 @@ export interface Settings {
   educationDirectorate: string;
   academicYear: string;
   semester: string;
+  logoBase64?: string; // شعار الوزارة (base64)
   currentUserName?: string; // اسم المستخدم الحالي للعرض في الهيدر فقط
 }
 
@@ -23,6 +24,9 @@ export enum ColumnType {
   MULTI_CHECKBOX = 'مجموعة مربعات',
 }
 
+// وضع حساب العداد لمجموعة المربعات
+export type MultiCountMode = 'check' | 'cross' | 'both';
+
 export interface Column {
   id: string;
   name: string;
@@ -32,6 +36,7 @@ export interface Column {
   multiSlots?: number;         // عدد الخانات داخل الخلية
   multiShowCounter?: boolean;  // عرض العداد داخل الخلية
   multiLabels?: string[];      // عناوين اختيارية لكل خانة
+  multiCountMode?: MultiCountMode; // طريقة العد: الصح فقط أو الخطأ فقط أو كلاهما
 }
 
 export interface Subject {

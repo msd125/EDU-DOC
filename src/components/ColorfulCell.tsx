@@ -1,4 +1,5 @@
 import React, { useState, useRef, ReactNode, cloneElement, isValidElement } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ColorfulCellProps {
   children: ReactNode;
@@ -40,7 +41,23 @@ const ColorfulCell: React.FC<ColorfulCellProps> = ({ children, cellId, openCell,
   const [fontSize, setFontSize] = useState<string>(initial()?.fontSize || '14px');
   const [textAlign, setTextAlign] = useState<'right' | 'center' | 'left'>(initial()?.textAlign || 'center');
   const timerRef = useRef<any>(null);
+  const touchStartRef = useRef<{x: number; y: number} | null>(null);
+  const movedRef = useRef<boolean>(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure portal is mounted only on client
+  React.useEffect(() => { setIsClient(true); }, []);
+
+  // Close picker with Escape key when open
+  React.useEffect(() => {
+    if (!showPicker) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && setOpenCell) setOpenCell(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showPicker, setOpenCell]);
 
   // حفظ التخصيصات عند أي تغيير
   React.useEffect(() => {
@@ -49,13 +66,45 @@ const ColorfulCell: React.FC<ColorfulCellProps> = ({ children, cellId, openCell,
     localStorage.setItem(getCellKey(cellId), JSON.stringify(data));
   }, [bgColor, textColor, fontSize, textAlign, cellId]);
 
-  const handleTouchStart = () => {
-    if (setOpenCell && cellId) {
-      timerRef.current = setTimeout(() => setOpenCell(cellId), 500);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // لا تفتح الأداة إذا كان اللمس على عنصر إدخال/قائمة/زر لمنع الارتباك
+    const target = e.target as HTMLElement;
+    const tag = target?.tagName;
+    if (tag && (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON')) return;
+    if (!setOpenCell || !cellId) return;
+    const t = e.touches && e.touches[0];
+    if (t) {
+      touchStartRef.current = { x: t.clientX, y: t.clientY };
+      movedRef.current = false;
+    }
+    // زيادة زمن الضغط المطوّل لتقليل الفتح العرضي
+    timerRef.current = setTimeout(() => {
+      if (!movedRef.current) setOpenCell(cellId);
+    }, 800);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    const dx = Math.abs(t.clientX - touchStartRef.current.x);
+    const dy = Math.abs(t.clientY - touchStartRef.current.y);
+    // إذا تحرّك الإصبع مسافة كافية نُلغي الضغط المطوّل (يساعد أثناء السحب/التمرير)
+    const THRESHOLD = 10; // بكسل
+    if (dx > THRESHOLD || dy > THRESHOLD) {
+      movedRef.current = true;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     }
   };
   const handleTouchEnd = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    touchStartRef.current = null;
+    movedRef.current = false;
   };
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -85,39 +134,37 @@ const ColorfulCell: React.FC<ColorfulCellProps> = ({ children, cellId, openCell,
   };
 
   // تم إزالة منطق تعديل موقع البوب أوفر تلقائياً ليظهر دائماً في وسط الشاشة فقط
-
-  return (
-    <td
-      style={{ background: bgColor, color: textColor, cursor: 'pointer', minWidth: 120, position: 'relative', fontSize, textAlign }}
-      onContextMenu={handleContextMenu}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-      className="text-center px-2 py-2 border"
-    >
-      {styledChild}
-      {showPicker && (
+  const pickerPortal = (showPicker && isClient) ? createPortal(
+    (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: 'rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onClick={() => setOpenCell && setOpenCell(null)}
+      >
         <div
           ref={popoverRef}
+          onClick={e => e.stopPropagation()}
           style={{
-            position: 'fixed',
-            zIndex: 9999,
             background: '#fff',
             color: '#222',
             boxShadow: '0 2px 16px #0003',
             borderRadius: 10,
             padding: 12,
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 'min(320px, 96vw)',
-            minWidth: 180,
+            width: 'min(360px, 96vw)',
+            minWidth: 200,
             minHeight: 120,
             maxHeight: '90vh',
             overflowY: 'auto',
             border: '1px solid #e5e7eb',
             fontFamily: 'inherit',
-            fontSize: '14px', // حجم خط ثابت للبليت
+            fontSize: '14px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -218,7 +265,23 @@ const ColorfulCell: React.FC<ColorfulCellProps> = ({ children, cellId, openCell,
             </button>
           </div>
         </div>
-      )}
+      </div>
+    ),
+    document.body
+  ) : null;
+
+  return (
+    <td
+      style={{ background: bgColor, color: textColor, cursor: 'pointer', minWidth: 120, position: 'relative', fontSize, textAlign }}
+      onContextMenu={handleContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      className="text-center px-2 py-2 border"
+    >
+      {styledChild}
+      {pickerPortal}
     </td>
   );
 };

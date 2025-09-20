@@ -1,12 +1,12 @@
 // ملف يحتوي على معلومات الإصدار
 // يُستخدم في جميع أنحاء التطبيق للتحقق من الإصدار الحالي
 
-export const APP_VERSION = '3.0.0';
-export const BUILD_DATE = '2025-09-17'; // تاريخ البناء
+export const APP_VERSION = '4.0.0';
+export const BUILD_DATE = '2025-09-20'; // تاريخ البناء
 export const BUILD_NUMBER = Date.now(); // رقم البناء الفريد
 
 // إعداد رقم البناء بتنسيق أكثر إنسانية  
-const buildDate = new Date('2025-09-17');
+const buildDate = new Date('2025-09-20');
 export const HUMAN_BUILD_NUMBER = 
   buildDate.getFullYear().toString().substring(2) + // السنة (آخر رقمين)
   (buildDate.getMonth() + 1).toString().padStart(2, '0') + // الشهر

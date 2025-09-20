@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Column, ColumnType } from '../types';
+import { Column, ColumnType, MultiCountMode } from '../types';
 
 interface EditColumnModalProps {
   onClose: () => void;
@@ -14,22 +14,29 @@ const EditColumnModal: React.FC<EditColumnModalProps> = ({ onClose, onSave, colu
   // إعدادات مجموعة المربعات
   const [multiSlots, setMultiSlots] = useState<number>((column as any).multiSlots || 8);
   const [multiShowCounter, setMultiShowCounter] = useState<boolean>(Boolean((column as any).multiShowCounter));
+  const [multiCountMode, setMultiCountMode] = useState<MultiCountMode>(((column as any).multiCountMode as MultiCountMode) || 'both');
 
-  // عند تغيير نوع العمود، أعد تهيئة إعدادات مجموعة المربعات أو احذفها
+  // عند تغيير نوع العمود (فعليًا) من/إلى مجموعة مربعات، اضبط القيم الافتراضية فقط عند التحويل
   useEffect(() => {
-    if (type === ColumnType.MULTI_CHECKBOX) {
-      setMultiSlots(8); // دائماً يبدأ بـ 8 عند التحويل
-      setMultiShowCounter(false);
-    } else {
+    if (type === ColumnType.MULTI_CHECKBOX && column.type !== ColumnType.MULTI_CHECKBOX) {
       setMultiSlots(8);
       setMultiShowCounter(false);
+      setMultiCountMode('both');
+    } else if (type !== ColumnType.MULTI_CHECKBOX && column.type === ColumnType.MULTI_CHECKBOX) {
+      setMultiSlots(8);
+      setMultiShowCounter(false);
+      setMultiCountMode('both');
     }
-  }, [type]);
+  }, [type, column.type]);
 
   useEffect(() => {
     setName(column.name);
     setType(column.type);
     setOptions(column.options?.join(', ') || '');
+    // حمّل إعدادات مجموعة المربعات الحالية كما هي
+    setMultiSlots((column as any).multiSlots || 8);
+    setMultiShowCounter(Boolean((column as any).multiShowCounter));
+    setMultiCountMode(((column as any).multiCountMode as MultiCountMode) || 'both');
   }, [column]);
 
 
@@ -46,7 +53,8 @@ const EditColumnModal: React.FC<EditColumnModalProps> = ({ onClose, onSave, colu
           type,
           options: finalOptions,
           multiSlots: Math.max(1, Math.min(64, Number(multiSlots) || 1)),
-          multiShowCounter: Boolean(multiShowCounter)
+          multiShowCounter: Boolean(multiShowCounter),
+          multiCountMode
         });
       } else {
         onSave({
@@ -122,6 +130,25 @@ const EditColumnModal: React.FC<EditColumnModalProps> = ({ onClose, onSave, colu
                   <input id="showCounter" type="checkbox" checked={multiShowCounter} onChange={e => setMultiShowCounter(e.target.checked)} />
                   <label htmlFor="showCounter" className="text-sm text-slate-700 dark:text-slate-300">عرض العداد داخل الخلية</label>
                 </div>
+                {multiShowCounter && (
+                  <div>
+                    <div className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">طريقة العد داخل الخلية</div>
+                    <div className="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mc-mode-edit" checked={multiCountMode==='check'} onChange={()=>setMultiCountMode('check')} />
+                        <span>يحسب الصح فقط (✓)</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mc-mode-edit" checked={multiCountMode==='cross'} onChange={()=>setMultiCountMode('cross')} />
+                        <span>يحسب الخطأ فقط (✗)</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mc-mode-edit" checked={multiCountMode==='both'} onChange={()=>setMultiCountMode('both')} />
+                        <span>يحسب كليهما (✓ و ✗)</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

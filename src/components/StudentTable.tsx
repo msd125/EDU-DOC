@@ -345,7 +345,12 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                             .map(c => normalizeChar(c))
                             .join('');
                           const padded = normalized.padEnd(slots, '0').slice(0, slots);
-                          const checkedCount = [...padded].filter(c => c === '1' || c === '2').length; // العداد يحسب الصح والإكس
+                          const mode = (col as any).multiCountMode as 'check' | 'cross' | 'both' | undefined;
+                          const checkedCount = (() => {
+                            if (mode === 'check') return [...padded].filter(c => c === '1').length;
+                            if (mode === 'cross') return [...padded].filter(c => c === '2').length;
+                            return [...padded].filter(c => c === '1' || c === '2').length; // both (الافتراضي)
+                          })();
                           
                           const toggleAt = (i: number) => {
                             try {
@@ -367,9 +372,9 @@ const StudentTable: React.FC<StudentTableProps> = (props) => {
                               openCell={openCell}
                               setOpenCell={setOpenCell}
                             >
-                              <div className="relative flex flex-wrap gap-[2px] items-center justify-center">
+                              <div className="relative pr-5 flex flex-wrap gap-[2px] items-center justify-center">
                                 {showCounter && (
-                                  <span className="absolute -top-4 right-0 text-[10px] text-slate-500">{checkedCount}/{slots}</span>
+                                  <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 pointer-events-none select-none">{checkedCount}/{slots}</span>
                                 )}
                                 {Array.from({ length: slots }).map((_, i) => {
                                   const ch = padded[i] || '0';

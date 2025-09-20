@@ -182,7 +182,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto relative border-2 sm:border-4 border-gradient-to-r border-pink-300">
     {/* خلفية متحركة مع تدرج ألوان (لوحة جديدة مميزة عن السابقة) */}
-  <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-400 text-white p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl relative overflow-hidden">
+  <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-green-600 text-white p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl relative overflow-hidden">
           {/* تأثيرات بريق متعددة */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 transform -skew-x-12 animate-ping pointer-events-none"></div>
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400 via-transparent to-transparent opacity-10 animate-pulse pointer-events-none"></div>
@@ -192,7 +192,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               <h2 className="text-lg sm:text-2xl font-bold mb-2">
                 🎉✨ ما الجديد في الإصدار {FULL_VERSION} ✨🎉
               </h2>
-              <p className="opacity-90 text-sm sm:text-lg">تحديثات مهمة لتحسين تجربتك 🚀</p>
+              <p className="opacity-90 text-sm sm:text-lg">نقلة نوعية في الشكل والوظائف 🚀</p>
             </div>
             <button
               onClick={handleClose}
@@ -267,6 +267,28 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                   >
                     جرّبها الآن
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* جديد الإصدار 4.0.0 */}
+            <div className="border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg sm:rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all transform hover:scale-105 hover:border-emerald-400">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="text-2xl sm:text-4xl animate-pulse">🌈</div>
+                <div className="flex-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-emerald-800 mb-2 sm:mb-3">أبرز ما في الإصدار 4.0</h3>
+                  <ul className="space-y-1 sm:space-y-2 text-slate-700">
+                    <li className="flex items-start gap-2"><span>🏷️</span><span>إضافة شعار الوزارة مع إمكانية رفع شعار مخصص من الإعدادات</span></li>
+                    <li className="flex items-start gap-2"><span>♻️</span><span>تغيير الشعار بسهولة عبر زر “تغيير الشعار” مع معاينة فورية</span></li>
+                    <li className="flex items-start gap-2"><span>🧾</span><span>التقارير (الطلاب والإدارية) تُظهر الشعار دائماً مع انتظار التحميل لضمان ظهوره في الطباعة</span></li>
+                    <li className="flex items-start gap-2"><span>🖼️</span><span>شعار افتراضي تلقائي عند عدم رفع شعار مخصص</span></li>
+                    <li className="flex items-start gap-2"><span>🎨</span><span>سمة ألوان جديدة متناسقة مع هوية وزارة التعليم (أخضر/تركوازي)</span></li>
+                    <li className="flex items-start gap-2"><span>📋</span><span>قائمة منسدلة مخصصة داخل المودال لاسم الكشف مع حصر كامل داخل النافذة ودعم لوحة المفاتيح</span></li>
+                    <li className="flex items-start gap-2"><span>👤</span><span>قائمة منسدلة مخصصة لمنصب الموقعين مع تنقل لوحة المفاتيح وإغلاق ذكي</span></li>
+                    <li className="flex items-start gap-2"><span>🖨️</span><span>تحسين تقارير الإدارة: ظهور ألوان الحقول المخصصة تماماً مثل تقارير الطلاب + توسيط تسلسل الموقعين</span></li>
+                    <li className="flex items-start gap-2"><span>🖌️</span><span>أداة تلوين الخلايا أكثر ذكاءً على اللمس (ضغط مطوّل فقط، وإلغاء أثناء السحب) مع تمركز دقيق في منتصف الشاشة</span></li>
+                    <li className="flex items-start gap-2"><span>📱</span><span>تحسين الاستجابة للمودالات الكبيرة ومنع خروج القوائم عن الحدود على الشاشات الصغيرة</span></li>
+                  </ul>
                 </div>
               </div>
             </div>

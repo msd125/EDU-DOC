@@ -18,10 +18,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
   const [importError, setImportError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const importFileRef = useRef<File | null>(null);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const defaultLogoUrl = (import.meta.env.BASE_URL || '/') + 'logo.png';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setCurrentSettings(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = e.target as any;
+    if (type === 'file' && files && files[0]) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCurrentSettings(prev => ({ ...prev, logoBase64: ev.target?.result as string }));
+      };
+      reader.readAsDataURL(files[0]);
+    } else {
+      setCurrentSettings(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,10 +85,35 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300">
-  <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 w-full max-w-3xl m-2 sm:m-6 border border-slate-200">
+  <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 w-full max-w-3xl m-2 sm:m-6 border border-slate-200 relative">
+    <img
+      src={currentSettings.logoBase64 || defaultLogoUrl}
+      alt="شعار"
+      className="absolute top-3 right-3 h-20 w-auto rounded-md pointer-events-none select-none"
+      style={{ objectFit: 'contain' }}
+    />
   <h2 className="text-2xl font-bold mb-8 text-slate-800 text-center">الإعدادات</h2>
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 pr-1">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <label htmlFor="logoBase64" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">تغيير الشعار</label>
+              <input
+                ref={logoInputRef}
+                type="file"
+                id="logoBase64"
+                name="logoBase64"
+                accept="image/*"
+                onChange={handleChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                className="px-2 py-1 text-xs font-semibold rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200"
+              >
+                تغيير الشعار
+              </button>
+            </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
               <label htmlFor="schoolName" className="sm:w-32 text-sm font-medium text-slate-700 whitespace-nowrap">اسم المدرسة</label>
               <input

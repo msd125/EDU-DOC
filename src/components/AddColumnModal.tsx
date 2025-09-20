@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ColumnType } from '../types';
+import { ColumnType, MultiCountMode } from '../types';
 
 interface AddColumnModalProps {
   onClose: () => void;
@@ -13,6 +13,7 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
   const [multiSlots, setMultiSlots] = useState<number>(8);
   const [multiShowCounter, setMultiShowCounter] = useState<boolean>(true);
   const [multiLabels, setMultiLabels] = useState<string>('');
+  const [multiCountMode, setMultiCountMode] = useState<MultiCountMode>('both');
   const [mainLabel, setMainLabel] = useState('');
   // لم يعد هناك حاجة لقيم منفصلة لكل حقل
 
@@ -32,7 +33,8 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
       const extra = type === ColumnType.MULTI_CHECKBOX ? {
         multiSlots: Math.max(1, Number(multiSlots) || 8),
         multiShowCounter,
-        multiLabels: multiLabels.trim() ? multiLabels.split(',').map(s => s.trim()).filter(Boolean) : undefined
+        multiLabels: multiLabels.trim() ? multiLabels.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        multiCountMode
       } : undefined;
       onAddColumn(mainLabel.trim(), type, finalOptions, extra);
     }
@@ -88,6 +90,25 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({ onClose, onAddColumn })
                   <input id="mcounter" type="checkbox" checked={multiShowCounter} onChange={e=>setMultiShowCounter(e.target.checked)} />
                   <label htmlFor="mcounter" className="text-sm text-slate-700 dark:text-slate-300">عرض العداد (مثلاً 4/8)</label>
                 </div>
+                {multiShowCounter && (
+                  <div>
+                    <div className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">طريقة العد داخل الخلية</div>
+                    <div className="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mc-mode" checked={multiCountMode==='check'} onChange={()=>setMultiCountMode('check')} />
+                        <span>يحسب الصح فقط (✓)</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mc-mode" checked={multiCountMode==='cross'} onChange={()=>setMultiCountMode('cross')} />
+                        <span>يحسب الخطأ فقط (✗)</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mc-mode" checked={multiCountMode==='both'} onChange={()=>setMultiCountMode('both')} />
+                        <span>يحسب كليهما (✓ و ✗)</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="block mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">تسميات اختيارية (مفصولة بفواصل)</label>
                   <input type="text" value={multiLabels} onChange={e=>setMultiLabels(e.target.value)} placeholder="أسبوع 1, أسبوع 2, ..." className="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-slate-700 dark:border-slate-600 dark:text-white"/>
